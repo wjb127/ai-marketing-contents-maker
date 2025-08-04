@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import {
   Box,
   Container,
@@ -13,7 +14,7 @@ import {
 } from '@chakra-ui/react'
 import { WarningIcon } from '@chakra-ui/icons'
 
-export default function PaymentFailPage() {
+function PaymentFailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -83,5 +84,31 @@ export default function PaymentFailPage() {
         </Box>
       </VStack>
     </Container>
+  )
+}
+
+export default function PaymentFailPage() {
+  return (
+    <Suspense fallback={
+      <Container maxW="md" py={20}>
+        <VStack spacing={8}>
+          <Alert status="error" borderRadius="lg">
+            <AlertIcon />
+            결제 정보를 불러오는 중...
+          </Alert>
+          <Box textAlign="center">
+            <WarningIcon color="red.500" boxSize={16} mb={4} />
+            <Heading size="xl" mb={2}>
+              결제 실패
+            </Heading>
+            <Text color="gray.600" fontSize="lg">
+              결제 정보를 불러오는 중입니다...
+            </Text>
+          </Box>
+        </VStack>
+      </Container>
+    }>
+      <PaymentFailContent />
+    </Suspense>
   )
 }

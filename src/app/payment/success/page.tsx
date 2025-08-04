@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box,
@@ -19,7 +19,7 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon } from '@chakra-ui/icons'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -201,5 +201,23 @@ export default function PaymentSuccessPage() {
         </Text>
       </VStack>
     </Container>
+  )
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <Container maxW="md" py={20}>
+        <VStack spacing={6} textAlign="center">
+          <Spinner size="xl" color="brand.500" />
+          <Heading size="lg">결제 확인 중...</Heading>
+          <Text color="gray.600">
+            결제를 확인하고 있습니다. 잠시만 기다려주세요.
+          </Text>
+        </VStack>
+      </Container>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   )
 }
