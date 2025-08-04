@@ -22,6 +22,7 @@ import {
   MenuItem,
   MenuDivider,
 } from '@chakra-ui/react'
+import NextLink from 'next/link'
 import {
   HamburgerIcon,
   CloseIcon,
@@ -148,19 +149,31 @@ const DesktopNav = () => {
         <Box key={navItem.label}>
           <Popover trigger={'hover'} placement={'bottom-start'}>
             <PopoverTrigger>
-              <Box
-                as="a"
-                p={2}
-                href={navItem.href ?? '#'}
-                fontSize={'sm'}
-                fontWeight={500}
-                color={linkColor}
-                _hover={{
-                  textDecoration: 'none',
-                  color: linkHoverColor,
-                }}>
-                {navItem.label}
-              </Box>
+              {navItem.href ? (
+                <NextLink href={navItem.href} passHref legacyBehavior>
+                  <Box
+                    as="a"
+                    p={2}
+                    fontSize={'sm'}
+                    fontWeight={500}
+                    color={linkColor}
+                    _hover={{
+                      textDecoration: 'none',
+                      color: linkHoverColor,
+                    }}>
+                    {navItem.label}
+                  </Box>
+                </NextLink>
+              ) : (
+                <Box
+                  p={2}
+                  fontSize={'sm'}
+                  fontWeight={500}
+                  color={linkColor}
+                  cursor="pointer">
+                  {navItem.label}
+                </Box>
+              )}
             </PopoverTrigger>
 
             {navItem.children && (
@@ -187,14 +200,14 @@ const DesktopNav = () => {
 
 const DesktopSubNav = ({ label, href, subLabel }: NavItem) => {
   return (
-    <Box
-      as="a"
-      href={href}
-      role={'group'}
-      display={'block'}
-      p={2}
-      rounded={'md'}
-      _hover={{ bg: useColorModeValue('brand.50', 'gray.900') }}>
+    <NextLink href={href || '#'} passHref legacyBehavior>
+      <Box
+        as="a"
+        role={'group'}
+        display={'block'}
+        p={2}
+        rounded={'md'}
+        _hover={{ bg: useColorModeValue('brand.50', 'gray.900') }}>
       <Stack direction={'row'} align={'center'}>
         <Box>
           <Text
@@ -216,7 +229,8 @@ const DesktopSubNav = ({ label, href, subLabel }: NavItem) => {
           <Icon color={'brand.400'} w={5} h={5} as={ChevronRightIcon} />
         </Flex>
       </Stack>
-    </Box>
+      </Box>
+    </NextLink>
   )
 }
 
@@ -238,30 +252,45 @@ const MobileNavItem = ({ label, children, href }: NavItem) => {
 
   return (
     <Stack spacing={4} onClick={children && onToggle}>
-      <Box
-        py={2}
-        as="a"
-        href={href ?? '#'}
-        justifyContent="space-between"
-        alignItems="center"
-        _hover={{
-          textDecoration: 'none',
-        }}>
-        <Text
-          fontWeight={600}
-          color={useColorModeValue('gray.600', 'gray.200')}>
-          {label}
-        </Text>
-        {children && (
-          <Icon
-            as={ChevronDownIcon}
-            transition={'all .25s ease-in-out'}
-            transform={isOpen ? 'rotate(180deg)' : ''}
-            w={6}
-            h={6}
-          />
-        )}
-      </Box>
+      {href ? (
+        <NextLink href={href} passHref legacyBehavior>
+          <Box
+            py={2}
+            as="a"
+            justifyContent="space-between"
+            alignItems="center"
+            _hover={{
+              textDecoration: 'none',
+            }}>
+            <Text
+              fontWeight={600}
+              color={useColorModeValue('gray.600', 'gray.200')}>
+              {label}
+            </Text>
+          </Box>
+        </NextLink>
+      ) : (
+        <Box
+          py={2}
+          justifyContent="space-between"
+          alignItems="center"
+          cursor="pointer">
+          <Text
+            fontWeight={600}
+            color={useColorModeValue('gray.600', 'gray.200')}>
+            {label}
+          </Text>
+        </Box>
+      )}
+      {children && (
+        <Icon
+          as={ChevronDownIcon}
+          transition={'all .25s ease-in-out'}
+          transform={isOpen ? 'rotate(180deg)' : ''}
+          w={6}
+          h={6}
+        />
+      )}
 
       <Collapse in={isOpen} animateOpacity style={{ marginTop: '0!important' }}>
         <Stack
@@ -273,9 +302,11 @@ const MobileNavItem = ({ label, children, href }: NavItem) => {
           align={'start'}>
           {children &&
             children.map((child) => (
-              <Box as="a" key={child.label} py={2} href={child.href}>
-                {child.label}
-              </Box>
+              <NextLink key={child.label} href={child.href || '#'} passHref legacyBehavior>
+                <Box as="a" py={2}>
+                  {child.label}
+                </Box>
+              </NextLink>
             ))}
         </Stack>
       </Collapse>

@@ -6,6 +6,10 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
+  // DOGFOODING MODE: Skip authentication middleware
+  console.log('Middleware: Dogfooding mode - skipping authentication')
+  return supabaseResponse
+
   // Check if environment variables are available
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
