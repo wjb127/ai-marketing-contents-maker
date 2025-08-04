@@ -191,8 +191,12 @@ async function handler(request: NextRequest) {
   }
 }
 
-// QStash 서명 검증을 통한 보안
-export const POST = verifySignature(handler)
+// QStash 서명 검증은 환경변수가 있을 때만 적용
+const POST = process.env.QSTASH_CURRENT_SIGNING_KEY 
+  ? verifySignature(handler) 
+  : handler
+
+export { POST }
 
 // 프롬프트 템플릿 함수
 function getPromptTemplate(
