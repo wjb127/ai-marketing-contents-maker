@@ -296,6 +296,16 @@ const NAV_ITEMS: Array<NavItem> = [
     href: '/',
   },
   {
+    label: '스케줄',
+    children: [
+      {
+        label: '자동 스케줄',
+        subLabel: '콘텐츠 자동 생성 스케줄을 설정하세요',
+        href: '/schedule',
+      },
+    ],
+  },
+  {
     label: '콘텐츠',
     children: [
       {
@@ -307,16 +317,6 @@ const NAV_ITEMS: Array<NavItem> = [
         label: '콘텐츠 관리',
         subLabel: '생성된 콘텐츠를 확인하고 관리하세요',
         href: '/content/library',
-      },
-    ],
-  },
-  {
-    label: '스케줄',
-    children: [
-      {
-        label: '자동 스케줄',
-        subLabel: '콘텐츠 자동 생성 스케줄을 설정하세요',
-        href: '/schedule',
       },
     ],
   },
