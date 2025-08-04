@@ -1,103 +1,205 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import {
+  Box,
+  Grid,
+  GridItem,
+  Heading,
+  Text,
+  Button,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  StatArrow,
+  Card,
+  CardBody,
+  CardHeader,
+  SimpleGrid,
+  Icon,
+  VStack,
+  HStack,
+  Badge,
+  Progress,
+} from '@chakra-ui/react'
+import { AddIcon, CalendarIcon, ViewIcon, RepeatIcon } from '@chakra-ui/icons'
+import Layout from '@/components/layout/Layout'
+
+export default function Dashboard() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <Layout>
+      <VStack spacing={8} align="stretch">
+        <Box>
+          <Heading size="xl" mb={2}>
+            Welcome to AI SNS Contents Maker
+          </Heading>
+          <Text color="gray.600" fontSize="lg">
+            Generate and schedule your social media content automatically with AI
+          </Text>
+        </Box>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
+          <Card>
+            <CardBody>
+              <Stat>
+                <StatLabel>Total Contents</StatLabel>
+                <StatNumber>127</StatNumber>
+                <StatHelpText>
+                  <StatArrow type="increase" />
+                  23.36%
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <Stat>
+                <StatLabel>Published Today</StatLabel>
+                <StatNumber>5</StatNumber>
+                <StatHelpText>
+                  <StatArrow type="increase" />
+                  12%
+                </StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <Stat>
+                <StatLabel>Scheduled</StatLabel>
+                <StatNumber>23</StatNumber>
+                <StatHelpText>Next 7 days</StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardBody>
+              <Stat>
+                <StatLabel>Active Schedules</StatLabel>
+                <StatNumber>3</StatNumber>
+                <StatHelpText>Running automatically</StatHelpText>
+              </Stat>
+            </CardBody>
+          </Card>
+        </SimpleGrid>
+
+        <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={6}>
+          <Card>
+            <CardHeader>
+              <Heading size="md">Quick Actions</Heading>
+            </CardHeader>
+            <CardBody>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <Button
+                  leftIcon={<AddIcon />}
+                  colorScheme="brand"
+                  size="lg"
+                  h="60px">
+                  Create Content
+                </Button>
+                <Button
+                  leftIcon={<CalendarIcon />}
+                  variant="outline"
+                  size="lg"
+                  h="60px">
+                  Schedule Content
+                </Button>
+                <Button
+                  leftIcon={<ViewIcon />}
+                  variant="outline"
+                  size="lg"
+                  h="60px">
+                  View Analytics
+                </Button>
+                <Button
+                  leftIcon={<RepeatIcon />}
+                  variant="outline"
+                  size="lg"
+                  h="60px">
+                  Auto Schedule
+                </Button>
+              </SimpleGrid>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Heading size="md">Recent Activity</Heading>
+            </CardHeader>
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                <Box>
+                  <HStack justify="space-between">
+                    <Text fontWeight="medium">Twitter post generated</Text>
+                    <Badge colorScheme="green">Published</Badge>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.600">
+                    2 minutes ago
+                  </Text>
+                </Box>
+                <Box>
+                  <HStack justify="space-between">
+                    <Text fontWeight="medium">Instagram content scheduled</Text>
+                    <Badge colorScheme="blue">Scheduled</Badge>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.600">
+                    5 minutes ago
+                  </Text>
+                </Box>
+                <Box>
+                  <HStack justify="space-between">
+                    <Text fontWeight="medium">LinkedIn article created</Text>
+                    <Badge colorScheme="yellow">Draft</Badge>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.600">
+                    1 hour ago
+                  </Text>
+                </Box>
+              </VStack>
+            </CardBody>
+          </Card>
+        </Grid>
+
+        <Card>
+          <CardHeader>
+            <Heading size="md">Platform Performance</Heading>
+          </CardHeader>
+          <CardBody>
+            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+              <Box>
+                <Text fontWeight="medium" mb={2}>
+                  Twitter
+                </Text>
+                <Progress value={80} colorScheme="blue" mb={2} />
+                <Text fontSize="sm" color="gray.600">
+                  45 posts this month
+                </Text>
+              </Box>
+              <Box>
+                <Text fontWeight="medium" mb={2}>
+                  Instagram
+                </Text>
+                <Progress value={65} colorScheme="pink" mb={2} />
+                <Text fontSize="sm" color="gray.600">
+                  32 posts this month
+                </Text>
+              </Box>
+              <Box>
+                <Text fontWeight="medium" mb={2}>
+                  LinkedIn
+                </Text>
+                <Progress value={40} colorScheme="blue" mb={2} />
+                <Text fontSize="sm" color="gray.600">
+                  18 posts this month
+                </Text>
+              </Box>
+            </SimpleGrid>
+          </CardBody>
+        </Card>
+      </VStack>
+    </Layout>
+  )
 }
