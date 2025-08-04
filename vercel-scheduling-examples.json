@@ -1,0 +1,107 @@
+{
+  "_comment": "Vercel Cron Job 설정 예시들",
+  
+  "simple-cron": {
+    "description": "간단한 Vercel 크론잡 - 사용자 < 100명",
+    "vercel.json": {
+      "crons": [
+        {
+          "path": "/api/cron/process-schedules",
+          "schedule": "*/30 * * * *"
+        }
+      ]
+    },
+    "env": {
+      "CRON_SECRET": "your-secret-key"
+    },
+    "pros": [
+      "설정 간단",
+      "별도 서비스 불필요",
+      "Vercel 통합"
+    ],
+    "cons": [
+      "최대 40개 크론잡 (Pro)",
+      "사용자별 개별 스케줄 불가",
+      "확장성 제한"
+    ]
+  },
+
+  "qstash-hybrid": {
+    "description": "QStash + Vercel 하이브리드 - 권장 방법",
+    "vercel.json": {
+      "crons": [
+        {
+          "path": "/api/cron/check-schedules",
+          "schedule": "0 */2 * * *"
+        }
+      ]
+    },
+    "env": {
+      "QSTASH_URL": "https://qstash.upstash.io",
+      "QSTASH_TOKEN": "your-token",
+      "QSTASH_CURRENT_SIGNING_KEY": "your-current-key",
+      "QSTASH_NEXT_SIGNING_KEY": "your-next-key"
+    },
+    "pros": [
+      "개별 사용자 스케줄",
+      "무제한 확장",
+      "자동 재시도",
+      "정확한 실행 시간"
+    ],
+    "cons": [
+      "외부 서비스 의존",
+      "약간의 추가 복잡성"
+    ]
+  },
+
+  "cost-comparison": {
+    "users-100": {
+      "vercel-cron": "$0 (모든 작업을 하나의 크론으로)",
+      "qstash": "$0 (3,000 메시지/월, 무료 tier)"
+    },
+    "users-1000": {
+      "vercel-cron": "$0 (하지만 성능 이슈 가능)",
+      "qstash": "$0 (30,000 메시지/월, 무료 tier)"
+    },
+    "users-10000": {
+      "vercel-cron": "불가능 (처리 시간 초과)",
+      "qstash": "$0 (300,000 메시지/월, 무료 tier)"
+    },
+    "users-100000": {
+      "vercel-cron": "불가능",
+      "qstash": "$50/월 (3,000,000 메시지/월)"
+    }
+  },
+
+  "implementation-steps": {
+    "phase-1-mvp": {
+      "method": "Vercel Cron Only",
+      "users": "< 100",
+      "setup": [
+        "vercel.json에 크론잡 추가",
+        "/api/cron/process-schedules 구현",
+        "CRON_SECRET 환경변수 설정"
+      ]
+    },
+    "phase-2-growth": {
+      "method": "QStash Migration",
+      "users": "100 - 10,000",
+      "setup": [
+        "Upstash QStash 계정 생성",
+        "@upstash/qstash 패키지 설치",
+        "스케줄 생성 시 QStash 예약",
+        "/api/content/generate-scheduled 구현"
+      ]
+    },
+    "phase-3-scale": {
+      "method": "Hybrid + Monitoring",
+      "users": "> 10,000",
+      "setup": [
+        "실패 복구 크론잡 추가",
+        "메트릭 수집",
+        "알림 시스템",
+        "성능 최적화"
+      ]
+    }
+  }
+}

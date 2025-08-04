@@ -19,6 +19,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.53.0",
     "@tosspayments/payment-sdk": "^1.9.1",
+    "@upstash/qstash": "^2.8.2",
     "cron": "^4.3.3",
     "framer-motion": "^10.18.0",
     "lucide-react": "^0.536.0",

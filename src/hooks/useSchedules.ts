@@ -61,21 +61,21 @@ export function useSchedules() {
     if (!user) throw new Error('User not authenticated')
 
     try {
-      const { data, error } = await supabase
-        .from('schedules')
-        .insert({
-          ...scheduleData,
-          user_id: user.id,
-          is_active: true
-        })
-        .select()
-        .single()
+      // API를 통해 스케줄 생성 (QStash 예약 포함)
+      const response = await fetch('/api/schedule/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scheduleData),
+      })
 
-      if (error) {
-        console.error('Error creating schedule:', error)
-        throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create schedule')
       }
 
+      const data = await response.json()
       setSchedules(prev => [data, ...prev])
       return data
     } catch (error: any) {
