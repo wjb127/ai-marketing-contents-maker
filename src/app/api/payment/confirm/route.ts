@@ -4,14 +4,9 @@ import { createClient } from '@/lib/supabase-server'
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    
+    // DOGFOODING MODE: Skip auth check
+    const user = { id: '00000000-0000-0000-0000-000000000001' }
 
     const { paymentKey, orderId, amount } = await request.json()
 

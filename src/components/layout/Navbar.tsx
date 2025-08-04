@@ -97,58 +97,34 @@ export default function Navbar() {
           justify={'flex-end'}
           direction={'row'}
           spacing={6}>
-          {user ? (
-            <Menu>
-              <MenuButton
-                as={Button}
-                rounded={'full'}
-                variant={'link'}
-                cursor={'pointer'}
-                minW={0}>
-                <Avatar
-                  size={'sm'}
-                  src={user.user_metadata?.avatar_url}
-                  name={user.email}
-                />
-              </MenuButton>
-              <MenuList>
-                <MenuItem>
-                  <Text fontSize="sm" color="gray.600">
-                    {user.email}
-                  </Text>
-                </MenuItem>
-                <MenuDivider />
-                <MenuItem>Profile</MenuItem>
-                <MenuItem>Settings</MenuItem>
-                <MenuDivider />
-                <MenuItem onClick={handleSignOut} color="red.500">
-                  Sign out
-                </MenuItem>
-              </MenuList>
-            </Menu>
-          ) : (
-            <>
-              <Button
-                fontSize={'sm'}
-                fontWeight={400}
-                variant={'link'}
-                onClick={() => openAuthModal(0)}>
-                Sign In
-              </Button>
-              <Button
-                display={{ base: 'none', md: 'inline-flex' }}
-                fontSize={'sm'}
-                fontWeight={600}
-                color={'white'}
-                bg={'brand.500'}
-                onClick={() => openAuthModal(1)}
-                _hover={{
-                  bg: 'brand.600',
-                }}>
-                Sign Up
-              </Button>
-            </>
-          )}
+          {/* DOGFOODING MODE: Always show as logged in */}
+          <Menu>
+            <MenuButton
+              as={Button}
+              rounded={'full'}
+              variant={'link'}
+              cursor={'pointer'}
+              minW={0}>
+              <Avatar
+                size={'sm'}
+                name="Dogfooding User"
+              />
+            </MenuButton>
+            <MenuList>
+              <MenuItem>
+                <Text fontSize="sm" color="gray.600">
+                  dogfooding@test.com
+                </Text>
+              </MenuItem>
+              <MenuDivider />
+              <MenuItem>Profile (Disabled)</MenuItem>
+              <MenuItem>Settings (Disabled)</MenuItem>
+              <MenuDivider />
+              <MenuItem color="gray.400" cursor="not-allowed">
+                Dogfooding Mode
+              </MenuItem>
+            </MenuList>
+          </Menu>
         </Stack>
       </Flex>
 
@@ -156,11 +132,7 @@ export default function Navbar() {
         <MobileNav />
       </Collapse>
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        defaultTab={authModalTab}
-      />
+      {/* DOGFOODING MODE: Auth modal disabled */}
     </Box>
   )
 }

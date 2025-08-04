@@ -1,83 +1,32 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useAuth } from './useAuth'
-import { supabase } from '@/lib/supabase'
+// DOGFOODING MODE: Returns hardcoded user data
 import { User } from '@/types'
 
+const DOGFOODING_USER_DATA: User = {
+  id: '00000000-0000-0000-0000-000000000001',
+  email: 'dogfooding@test.com',
+  name: 'Dogfooding User',
+  avatar_url: null,
+  subscription_plan: 'premium',
+  subscription_status: 'active',
+  subscription_end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
+  toss_customer_id: null,
+  monthly_content_count: 0,
+  monthly_reset_date: new Date().toISOString(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+}
+
 export function useUser() {
-  const { user: authUser } = useAuth()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!authUser) {
-      setUser(null)
-      setLoading(false)
-      return
-    }
-
-    fetchUser()
-  }, [authUser])
-
-  const fetchUser = async () => {
-    if (!authUser) return
-
-    try {
-      setLoading(true)
-      setError(null)
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single()
-
-      if (error) {
-        console.error('Error fetching user:', error)
-        setError(error.message)
-        return
-      }
-
-      setUser(data)
-    } catch (error: any) {
-      console.error('Error fetching user:', error)
-      setError(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const updateUser = async (updates: Partial<User>) => {
-    if (!authUser) return
-
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', authUser.id)
-        .select()
-        .single()
-
-      if (error) {
-        console.error('Error updating user:', error)
-        throw error
-      }
-
-      setUser(data)
-      return data
-    } catch (error) {
-      console.error('Error updating user:', error)
-      throw error
-    }
-  }
-
   return {
-    user,
-    loading,
-    error,
-    refetch: fetchUser,
-    updateUser
+    user: DOGFOODING_USER_DATA,
+    loading: false,
+    error: null,
+    refetch: async () => {},
+    updateUser: async (updates: Partial<User>) => {
+      // In dogfooding mode, just return the updated user
+      return { ...DOGFOODING_USER_DATA, ...updates }
+    }
   }
 }

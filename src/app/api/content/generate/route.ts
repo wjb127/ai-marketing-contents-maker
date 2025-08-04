@@ -112,14 +112,9 @@ const getPromptTemplate = (
 export async function POST(request: NextRequest) {
   try {
     const supabase = createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    
+    // DOGFOODING MODE: Skip auth check
+    const user = { id: '00000000-0000-0000-0000-000000000001' }
 
     const { 
       type,
@@ -136,38 +131,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check user's subscription and usage limits
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('subscription_plan, monthly_content_count, subscription_status')
-      .eq('id', user.id)
-      .single()
-
-    if (userError) {
-      console.error('Error fetching user data:', userError)
-      return NextResponse.json(
-        { error: 'Failed to verify user subscription' },
-        { status: 500 }
-      )
-    }
-
-    // Check usage limits
-    const subscriptionPlan = userData.subscription_plan || 'free'
-    const monthlyCount = userData.monthly_content_count || 0
-    
-    const limits = {
-      free: 5,
-      pro: 50,
-      premium: -1 // unlimited
-    }
-
-    const limit = limits[subscriptionPlan as keyof typeof limits]
-    if (limit !== -1 && monthlyCount >= limit) {
-      return NextResponse.json(
-        { error: 'Monthly content generation limit reached. Please upgrade your plan.' },
-        { status: 403 }
-      )
-    }
+    // DOGFOODING MODE: Skip subscription checks
+    const monthlyCount = 0
 
     const prompt = getPromptTemplate(
       type,
@@ -216,17 +181,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update user's monthly content count
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
-        monthly_content_count: monthlyCount + 1 
-      })
-      .eq('id', user.id)
-
-    if (updateError) {
-      console.error('Error updating content count:', updateError)
-    }
+    // DOGFOODING MODE: Skip updating user's monthly content count
 
     return NextResponse.json(contentData)
   } catch (error) {
