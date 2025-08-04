@@ -76,6 +76,8 @@ CREATE TABLE public.schedules (
     is_active BOOLEAN DEFAULT true NOT NULL,
     last_run_at TIMESTAMP WITH TIME ZONE,
     next_run_at TIMESTAMP WITH TIME ZONE,
+    qstash_message_id TEXT, -- QStash 메시지 ID
+    total_generated INTEGER DEFAULT 0 NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );

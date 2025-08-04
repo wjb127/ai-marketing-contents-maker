@@ -1,16 +1,39 @@
 import { Client } from '@upstash/qstash'
 
 // QStash client singleton
-export const qstash = new Client({
+export const qstash = process.env.QSTASH_TOKEN ? new Client({
   token: process.env.QSTASH_TOKEN!,
-})
+}) : null
+
+// QStash 사용 가능 여부 확인
+export const isQStashConfigured = () => {
+  return !!(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_URL)
+}
+
+// 환경 확인 로그
+if (typeof window === 'undefined') { // 서버 사이드에서만 실행
+  console.log('QStash configured:', isQStashConfigured())
+  if (isQStashConfigured()) {
+    console.log('QStash URL:', process.env.NEXT_PUBLIC_URL)
+  }
+}
 
 // 스케줄링 헬퍼 함수들
 export async function scheduleContentGeneration(
   scheduleId: string, 
   executeAt: Date
 ) {
+  if (!qstash || !isQStashConfigured()) {
+    throw new Error('QStash is not configured. Please set QSTASH_TOKEN and NEXT_PUBLIC_URL')
+  }
+
   const url = `${process.env.NEXT_PUBLIC_URL}/api/content/generate-scheduled`
+  
+  console.log('Scheduling content generation:', {
+    scheduleId,
+    executeAt: executeAt.toISOString(),
+    url
+  })
   
   const response = await qstash.publishJSON({
     url,
@@ -20,16 +43,25 @@ export async function scheduleContentGeneration(
     },
     notBefore: Math.floor(executeAt.getTime() / 1000), // Unix timestamp
     retries: 3,
-    timeout: '30s'
+    timeout: '60s', // 타임아웃 증가
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
 
+  console.log('QStash message scheduled:', response.messageId)
   return response.messageId
 }
 
 // 스케줄 취소
 export async function cancelScheduledGeneration(messageId: string) {
+  if (!qstash || !messageId) {
+    return false
+  }
+
   try {
     await qstash.messages.delete(messageId)
+    console.log('QStash message cancelled:', messageId)
     return true
   } catch (error) {
     console.error('Failed to cancel scheduled message:', error)

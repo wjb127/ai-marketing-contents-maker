@@ -19,6 +19,7 @@ import {
   AlertIcon,
   Spinner,
   Center,
+  useToast,
 } from '@chakra-ui/react'
 import { AddIcon } from '@chakra-ui/icons'
 import { useState, useEffect } from 'react'
@@ -43,6 +44,7 @@ export default function SchedulePage() {
     onOpen: onUpgradeOpen, 
     onClose: onUpgradeClose 
   } = useDisclosure()
+  const toast = useToast()
 
   const userPlan = user?.subscription_plan || 'free'
   const planLimits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS]
@@ -91,6 +93,40 @@ export default function SchedulePage() {
 
   const canCreateSchedule = planLimits.maxSchedules === -1 || schedules.length < planLimits.maxSchedules
 
+  // QStash 테스트 함수
+  const handleTestQStash = async () => {
+    try {
+      const response = await fetch('/api/schedule/test', {
+        method: 'POST'
+      })
+      
+      const result = await response.json()
+      
+      if (response.ok) {
+        toast({
+          title: 'QStash 테스트 성공!',
+          description: '✨ 1분 후에 콘텐츠가 자동 생성됩니다. 콘텐츠 라이브러리에서 확인하세요.',
+          status: 'success',
+          duration: 8000,
+          isClosable: true,
+        })
+        
+        // 스케줄 목록 새로고침
+        window.location.reload()
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      toast({
+        title: 'QStash 테스트 실패',
+        description: `오류: ${error.message}`,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
+
   return (
     <ProtectedRoute>
       <Layout>
@@ -109,13 +145,23 @@ export default function SchedulePage() {
               </Text>
             </VStack>
             
-            <Button
-              leftIcon={<AddIcon />}
-              colorScheme="brand"
-              onClick={canCreateSchedule ? onOpen : onUpgradeOpen}
-            >
-              {canCreateSchedule ? 'Create Schedule' : 'Upgrade to Create'}
-            </Button>
+            <HStack>
+              <Button
+                colorScheme="green"
+                variant="outline"
+                onClick={handleTestQStash}
+                size="sm"
+              >
+                🚀 QStash 테스트
+              </Button>
+              <Button
+                leftIcon={<AddIcon />}
+                colorScheme="brand"
+                onClick={canCreateSchedule ? onOpen : onUpgradeOpen}
+              >
+                {canCreateSchedule ? 'Create Schedule' : 'Upgrade to Create'}
+              </Button>
+            </HStack>
           </HStack>
 
           {!planLimits.autoGeneration && (

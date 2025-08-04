@@ -170,8 +170,22 @@ async function handler(request: NextRequest) {
 
   } catch (error) {
     console.error('Scheduled generation error:', error)
+    
+    // 실패 로그를 데이터베이스에 기록 (옵션)
+    try {
+      const supabase = createClient()
+      await supabase
+        .from('schedules')
+        .update({ 
+          last_run_at: new Date().toISOString()
+        })
+        .eq('id', body?.scheduleId)
+    } catch (dbError) {
+      console.error('Failed to update schedule after error:', dbError)
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to generate scheduled content' },
+      { error: 'Failed to generate scheduled content', details: error.message },
       { status: 500 }
     )
   }
@@ -180,16 +194,51 @@ async function handler(request: NextRequest) {
 // QStash 서명 검증을 통한 보안
 export const POST = verifySignature(handler)
 
-// 프롬프트 템플릿 함수 (기존 generate route에서 가져옴)
+// 프롬프트 템플릿 함수
 function getPromptTemplate(
   contentType: string,
   tone: string,
   topic: string,
-  length: string,
+  length: string = 'medium',
   targetAudience?: string,
   includeHashtags?: boolean,
   additionalNotes?: string
 ) {
-  // ... 기존 프롬프트 로직
-  return `Generate ${contentType} content about "${topic}" in ${tone} tone.`
+  let basePrompt = ''
+  
+  switch (contentType) {
+    case 'x_post':
+      basePrompt = `Create a single X (Twitter) post about "${topic}" in a ${tone} tone.
+      
+      - Keep it under 280 characters
+      - Make it engaging and shareable
+      - Use emojis naturally
+      ${includeHashtags ? '- Include 2-3 relevant hashtags' : ''}`
+      break
+      
+    case 'thread':
+      basePrompt = `Create a Twitter thread about "${topic}" in a ${tone} tone.
+      
+      - Format as numbered tweets (1/X, 2/X, etc.)
+      - Start with a hook in the first tweet
+      - 5-7 tweets total
+      - Each tweet under 280 characters
+      - End with a call-to-action`
+      break
+      
+    default:
+      basePrompt = `Generate ${contentType} content about "${topic}" in ${tone} tone.`
+  }
+  
+  if (targetAudience) {
+    basePrompt += `\n- Target audience: ${targetAudience}`
+  }
+  
+  if (additionalNotes) {
+    basePrompt += `\n- Additional instructions: ${additionalNotes}`
+  }
+  
+  basePrompt += `\n\nGenerate engaging, original content. Return only the content without meta-commentary.`
+  
+  return basePrompt
 }
