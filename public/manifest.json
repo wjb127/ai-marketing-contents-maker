@@ -1,0 +1,26 @@
+{
+  "name": "AI SNS 콘텐츠 메이커",
+  "short_name": "AI SNS Maker",
+  "description": "AI로 SNS 콘텐츠를 자동 생성하고 스케줄링하세요",
+  "theme_color": "#3182ce",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}

@@ -5,11 +5,9 @@ import theme from '@/lib/theme'
 
 export function ChakraProvider({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <ChakraUIProvider theme={theme} resetCSS>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-      <ChakraUIProvider theme={theme}>
-        {children}
-      </ChakraUIProvider>
-    </>
+      {children}
+    </ChakraUIProvider>
   )
 }

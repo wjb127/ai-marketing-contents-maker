@@ -15,8 +15,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI SNS Contents Maker",
-  description: "Automatically generate and schedule SNS contents with AI",
+  title: "AI SNS 콘텐츠 메이커",
+  description: "AI로 SNS 콘텐츠를 자동으로 생성하고 스케줄링하세요",
+  keywords: ["AI", "SNS", "콘텐츠", "자동생성", "스케줄링", "소셜미디어"],
+  authors: [{ name: "AI SNS Maker" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AI SNS Maker",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    siteName: "AI SNS 콘텐츠 메이커",
+    title: "AI SNS 콘텐츠 메이커",
+    description: "AI로 SNS 콘텐츠를 자동으로 생성하고 스케줄링하세요",
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#3182ce',
 };
 
 export default function RootLayout({
@@ -25,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

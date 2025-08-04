@@ -292,41 +292,36 @@ interface NavItem {
 
 const NAV_ITEMS: Array<NavItem> = [
   {
-    label: 'Dashboard',
+    label: '홈',
     href: '/',
   },
   {
-    label: 'Content',
+    label: '콘텐츠',
     children: [
       {
-        label: 'Create Content',
-        subLabel: 'Generate new SNS content with AI',
+        label: '콘텐츠 생성',
+        subLabel: 'AI로 새로운 콘텐츠를 생성하세요',
         href: '/content/create',
       },
       {
-        label: 'Content Library',
-        subLabel: 'View and manage your content',
+        label: '콘텐츠 관리',
+        subLabel: '생성된 콘텐츠를 확인하고 관리하세요',
         href: '/content/library',
       },
     ],
   },
   {
-    label: 'Schedule',
+    label: '스케줄',
     children: [
       {
-        label: 'Scheduling',
-        subLabel: 'Set up automated content generation',
+        label: '자동 스케줄',
+        subLabel: '콘텐츠 자동 생성 스케줄을 설정하세요',
         href: '/schedule',
-      },
-      {
-        label: 'Calendar',
-        subLabel: 'View your content calendar',
-        href: '/calendar',
       },
     ],
   },
   {
-    label: 'Analytics',
-    href: '/analytics',
+    label: '구독',
+    href: '/subscription',
   },
 ]
