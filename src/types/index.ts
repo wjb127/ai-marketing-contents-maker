@@ -94,9 +94,7 @@ export interface SubscriptionPlan {
   id: string
   name: string
   price: number
+  description: string
   features: string[]
-  max_schedules: number
-  max_content_per_month: number
-  auto_generation: boolean
-  priority_support: boolean
+  popular?: boolean
 }

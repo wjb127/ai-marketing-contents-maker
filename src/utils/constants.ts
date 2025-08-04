@@ -63,26 +63,69 @@ export const FREQUENCY_LABELS = {
   [SCHEDULE_FREQUENCY.MONTHLY]: 'Monthly',
 } as const
 
-export const SUBSCRIPTION_PLANS = {
+export const SUBSCRIPTION_PLAN_TYPES = {
   FREE: 'free',
   PRO: 'pro',
   PREMIUM: 'premium',
 } as const
 
+export const SUBSCRIPTION_PLANS = [
+  {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    description: '기본 기능으로 시작하세요',
+    features: [
+      '월 10개 콘텐츠 생성',
+      '1개 자동 스케줄',
+      'X, LinkedIn 포스트',
+      '기본 지원'
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 29,
+    description: '더 많은 콘텐츠와 기능을 이용하세요',
+    features: [
+      '월 100개 콘텐츠 생성',
+      '5개 자동 스케줄',
+      '모든 콘텐츠 타입',
+      '자동 생성 기능',
+      '우선 지원'
+    ],
+    popular: true,
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    price: 99,
+    description: '무제한으로 모든 기능을 활용하세요',
+    features: [
+      '무제한 콘텐츠 생성',
+      '무제한 자동 스케줄',
+      '모든 콘텐츠 타입',
+      '자동 생성 기능',
+      '24/7 전담 지원',
+      '고급 분석 도구'
+    ],
+  },
+] as const
+
 export const PLAN_LIMITS = {
-  [SUBSCRIPTION_PLANS.FREE]: {
+  [SUBSCRIPTION_PLAN_TYPES.FREE]: {
     maxSchedules: 1,
     maxContentPerMonth: 10,
     autoGeneration: false,
     contentTypes: [CONTENT_TYPES.X_POST, CONTENT_TYPES.LINKEDIN_POST],
   },
-  [SUBSCRIPTION_PLANS.PRO]: {
+  [SUBSCRIPTION_PLAN_TYPES.PRO]: {
     maxSchedules: 5,
     maxContentPerMonth: 100,
     autoGeneration: true,
     contentTypes: Object.values(CONTENT_TYPES),
   },
-  [SUBSCRIPTION_PLANS.PREMIUM]: {
+  [SUBSCRIPTION_PLAN_TYPES.PREMIUM]: {
     maxSchedules: -1, // unlimited
     maxContentPerMonth: -1, // unlimited
     autoGeneration: true,

@@ -17,57 +17,7 @@ import { useState } from 'react'
 import { SubscriptionPlan } from '@/types'
 import PlanCard from './PlanCard'
 import { useAuth } from '@/hooks/useAuth'
-
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    features: [
-      'X Posts and LinkedIn Posts',
-      'Manual content generation',
-      'Basic templates',
-      'Email support',
-    ],
-    max_schedules: 1,
-    max_content_per_month: 10,
-    auto_generation: false,
-    priority_support: false,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 29,
-    features: [
-      'All content types',
-      'Auto-generation & scheduling',
-      'Advanced templates',
-      'Analytics dashboard',
-      'Custom prompts',
-    ],
-    max_schedules: 5,
-    max_content_per_month: 100,
-    auto_generation: true,
-    priority_support: false,
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 79,
-    features: [
-      'Everything in Pro',
-      'Unlimited content generation',
-      'Priority support',
-      'Custom integrations',
-      'Advanced analytics',
-      'White-label options',
-    ],
-    max_schedules: -1,
-    max_content_per_month: -1,
-    auto_generation: true,
-    priority_support: true,
-  },
-]
+import { SUBSCRIPTION_PLANS } from '@/utils/constants'
 
 interface SubscriptionManagerProps {
   showUpgradeOnly?: boolean
@@ -133,10 +83,7 @@ export default function SubscriptionManager({ showUpgradeOnly = false }: Subscri
               Current Plan: {currentPlanData.name}
             </Text>
             <Text fontSize="sm">
-              {currentPlanData.max_content_per_month === -1 
-                ? 'Unlimited content generation' 
-                : `${currentPlanData.max_content_per_month} content pieces remaining this month`
-              }
+              {currentPlanData.description}
             </Text>
           </Box>
         </Alert>
@@ -153,7 +100,7 @@ export default function SubscriptionManager({ showUpgradeOnly = false }: Subscri
             key={plan.id}
             plan={plan}
             isCurrentPlan={plan.id === currentPlan}
-            isPopular={plan.id === 'pro'}
+            isPopular={plan.popular || false}
             onSelect={handlePlanSelect}
           />
         ))}

@@ -18,6 +18,7 @@ import {
 } from '@chakra-ui/react'
 import { CheckIcon } from '@chakra-ui/icons'
 import { SubscriptionPlan } from '@/types'
+import { PLAN_LIMITS } from '@/utils/constants'
 import TossPayment from '@/components/payment/TossPayment'
 
 interface PlanCardProps {
@@ -33,6 +34,8 @@ export default function PlanCard({
   isPopular = false,
   onSelect 
 }: PlanCardProps) {
+  const planLimits = PLAN_LIMITS[plan.id as keyof typeof PLAN_LIMITS]
+  
   const borderColor = useColorModeValue(
     isCurrentPlan ? 'brand.500' : 'gray.200',
     isCurrentPlan ? 'brand.300' : 'gray.600'
@@ -77,10 +80,13 @@ export default function PlanCard({
         </Heading>
         <HStack justify="center" spacing={1}>
           <Text fontSize="3xl" fontWeight="bold">
-            ${plan.price}
+            ₩{plan.price * 1000}
           </Text>
           <Text color="gray.500">/month</Text>
         </HStack>
+        <Text fontSize="sm" color="gray.600" textAlign="center">
+          {plan.description}
+        </Text>
       </CardHeader>
       
       <CardBody pt={0}>
@@ -93,38 +99,35 @@ export default function PlanCard({
               </ListItem>
             ))}
             
-            <ListItem display="flex" alignItems="center">
-              <ListIcon as={CheckIcon} color="green.500" />
-              <Text>
-                {plan.max_schedules === -1 
-                  ? 'Unlimited schedules' 
-                  : `${plan.max_schedules} schedule${plan.max_schedules > 1 ? 's' : ''}`
-                }
-              </Text>
-            </ListItem>
-            
-            <ListItem display="flex" alignItems="center">
-              <ListIcon as={CheckIcon} color="green.500" />
-              <Text>
-                {plan.max_content_per_month === -1 
-                  ? 'Unlimited content generation' 
-                  : `${plan.max_content_per_month} content pieces/month`
-                }
-              </Text>
-            </ListItem>
-            
-            {plan.auto_generation && (
-              <ListItem display="flex" alignItems="center">
-                <ListIcon as={CheckIcon} color="green.500" />
-                <Text>Auto-generation & scheduling</Text>
-              </ListItem>
-            )}
-            
-            {plan.priority_support && (
-              <ListItem display="flex" alignItems="center">
-                <ListIcon as={CheckIcon} color="green.500" />
-                <Text>Priority support</Text>
-              </ListItem>
+            {planLimits && (
+              <>
+                <ListItem display="flex" alignItems="center">
+                  <ListIcon as={CheckIcon} color="green.500" />
+                  <Text>
+                    {planLimits.maxSchedules === -1 
+                      ? '무제한 스케줄' 
+                      : `${planLimits.maxSchedules}개 스케줄`
+                    }
+                  </Text>
+                </ListItem>
+                
+                <ListItem display="flex" alignItems="center">
+                  <ListIcon as={CheckIcon} color="green.500" />
+                  <Text>
+                    {planLimits.maxContentPerMonth === -1 
+                      ? '무제한 콘텐츠 생성' 
+                      : `월 ${planLimits.maxContentPerMonth}개 콘텐츠`
+                    }
+                  </Text>
+                </ListItem>
+                
+                {planLimits.autoGeneration && (
+                  <ListItem display="flex" alignItems="center">
+                    <ListIcon as={CheckIcon} color="green.500" />
+                    <Text>자동 생성 및 스케줄링</Text>
+                  </ListItem>
+                )}
+              </>
             )}
           </List>
 
@@ -136,7 +139,7 @@ export default function PlanCard({
               width="100%"
               isDisabled
             >
-              Current Plan
+              현재 플랜
             </Button>
           ) : plan.price === 0 ? (
             <Button
@@ -146,7 +149,7 @@ export default function PlanCard({
               width="100%"
               onClick={() => onSelect?.(plan.id)}
             >
-              Choose Free Plan
+              무료 플랜 선택
             </Button>
           ) : (
             <TossPayment 
