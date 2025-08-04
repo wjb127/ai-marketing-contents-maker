@@ -110,7 +110,7 @@ export const SUBSCRIPTION_PLANS = [
       '고급 분석 도구'
     ],
   },
-] as const
+]
 
 export const PLAN_LIMITS = {
   [SUBSCRIPTION_PLAN_TYPES.FREE]: {

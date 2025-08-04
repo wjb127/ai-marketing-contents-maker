@@ -30,7 +30,7 @@ export default function SubscriptionPage() {
   const { user, loading: userLoading } = useUser()
   
   const userPlan = user?.subscription_plan || 'free'
-  const currentPlanData = SUBSCRIPTION_PLANS.find(plan => plan.id === userPlan)
+  const currentPlanData = SUBSCRIPTION_PLANS.find((plan: any) => plan.id === userPlan)
   const planLimits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS]
   
   const usageData = {
