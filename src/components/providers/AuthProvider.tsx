@@ -57,11 +57,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [supabase.auth])
 
   const signUp = async (email: string, password: string) => {
+    const redirectUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/auth/callback`
+      : `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/auth/callback`
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: redirectUrl,
       },
     })
     if (error) throw error
@@ -81,10 +85,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signInWithGoogle = async () => {
+    const redirectUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/auth/callback`
+      : `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/auth/callback`
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl,
       },
     })
     if (error) throw error
