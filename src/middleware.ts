@@ -6,9 +6,19 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
+  // Check if environment variables are available
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Skip middleware logic if environment variables are not available
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Missing Supabase environment variables in middleware')
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -27,22 +37,27 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  // Protected routes
-  const protectedPaths = ['/dashboard', '/content', '/schedule', '/analytics']
-  const isProtectedPath = protectedPaths.some(path => 
-    request.nextUrl.pathname.startsWith(path)
-  )
+    // Protected routes
+    const protectedPaths = ['/dashboard', '/content', '/schedule', '/analytics']
+    const isProtectedPath = protectedPaths.some(path => 
+      request.nextUrl.pathname.startsWith(path)
+    )
 
-  // If accessing protected route without authentication, redirect to home
-  if (isProtectedPath && !user) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/'
-    redirectUrl.searchParams.set('redirected', 'true')
-    return NextResponse.redirect(redirectUrl)
+    // If accessing protected route without authentication, redirect to home
+    if (isProtectedPath && !user) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/'
+      redirectUrl.searchParams.set('redirected', 'true')
+      return NextResponse.redirect(redirectUrl)
+    }
+  } catch (error) {
+    console.error('Error in middleware auth check:', error)
+    // Continue without authentication check if there's an error
   }
 
   return supabaseResponse
