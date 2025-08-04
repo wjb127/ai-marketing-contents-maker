@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@/lib/supabase'
 import { Schedule, ContentType, ContentTone } from '@/types'
 import { useAuth } from './useAuth'
 
@@ -10,9 +10,11 @@ export function useSchedules() {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const supabase = createClientComponentClient()
 
   const fetchSchedules = useCallback(async () => {
-    if (!user) {
+    if (!user || !supabase) {
       setSchedules([])
       setLoading(false)
       return
@@ -85,7 +87,7 @@ export function useSchedules() {
   }
 
   const updateSchedule = async (scheduleId: string, updates: Partial<Schedule>) => {
-    if (!user) throw new Error('User not authenticated')
+    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
 
     try {
       const { data, error } = await supabase
@@ -115,7 +117,7 @@ export function useSchedules() {
   }
 
   const deleteSchedule = async (scheduleId: string) => {
-    if (!user) throw new Error('User not authenticated')
+    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
 
     try {
       const { error } = await supabase

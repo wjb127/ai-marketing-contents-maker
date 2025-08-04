@@ -34,6 +34,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   
   const supabase = createClientComponentClient()
+  
+  if (!supabase) {
+    // Return a minimal provider for SSR
+    const value: AuthContextType = {
+      user: null,
+      session: null,
+      loading: true,
+      signUp: async () => { throw new Error('Supabase not initialized') },
+      signIn: async () => { throw new Error('Supabase not initialized') },
+      signOut: async () => { throw new Error('Supabase not initialized') },
+      signInWithGoogle: async () => { throw new Error('Supabase not initialized') },
+    }
+    
+    return (
+      <AuthContext.Provider value={value}>
+        {children}
+      </AuthContext.Provider>
+    )
+  }
 
   useEffect(() => {
     const getSession = async () => {

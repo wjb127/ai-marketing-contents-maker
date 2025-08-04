@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClientComponentClient } from '@/lib/supabase'
 import { Content, ContentType, ContentTone } from '@/types'
 import { useAuth } from './useAuth'
 
@@ -10,9 +10,11 @@ export function useContents() {
   const [contents, setContents] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const supabase = createClientComponentClient()
 
   const fetchContents = useCallback(async () => {
-    if (!user) {
+    if (!user || !supabase) {
       setContents([])
       setLoading(false)
       return
@@ -80,7 +82,7 @@ export function useContents() {
   }
 
   const deleteContent = async (contentId: string) => {
-    if (!user) throw new Error('User not authenticated')
+    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
 
     try {
       const { error } = await supabase
@@ -102,7 +104,7 @@ export function useContents() {
   }
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
-    if (!user) throw new Error('User not authenticated')
+    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
 
     try {
       const { data, error } = await supabase
