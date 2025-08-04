@@ -63,8 +63,8 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     
     if (!formData.topic.trim()) {
       toast({
-        title: 'Error',
-        description: 'Please enter a topic for your content',
+        title: '입력 오류',
+        description: '콘텐츠 주제를 입력해주세요',
         status: 'error',
         duration: 3000,
       })
@@ -76,15 +76,15 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     try {
       onSubmit?.(formData)
       toast({
-        title: 'Content Generation Started',
-        description: 'Your AI content is being generated...',
+        title: '콘텐츠 생성 시작',
+        description: 'AI가 콘텐츠를 생성하고 있습니다...',
         status: 'info',
         duration: 3000,
       })
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to generate content',
+        title: '오류',
+        description: '콘텐츠 생성에 실패했습니다',
         status: 'error',
         duration: 3000,
       })
@@ -102,23 +102,23 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
   return (
     <Card>
       <CardHeader>
-        <Heading size="md">Generate New Content</Heading>
-        <Text color="gray.600">Create AI-powered content for various platforms and formats</Text>
+        <Heading size="md" color="gray.800">새 콘텐츠 생성</Heading>
+        <Text color="gray.600">다양한 플랫폼과 형식에 맞는 AI 콘텐츠를 만들어보세요</Text>
       </CardHeader>
       <CardBody>
         <form onSubmit={handleSubmit}>
           <VStack spacing={6}>
             <FormControl isRequired>
-              <FormLabel>Topic</FormLabel>
+              <FormLabel>주제</FormLabel>
               <Input
-                placeholder="Enter the topic or theme for your content"
+                placeholder="콘텐츠의 주제나 테마를 입력하세요"
                 value={formData.topic}
                 onChange={(e) => handleInputChange('topic', e.target.value)}
               />
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>Content Type</FormLabel>
+              <FormLabel>콘텐츠 타입</FormLabel>
               <Select
                 value={formData.contentType}
                 onChange={(e) => handleInputChange('contentType', e.target.value as ContentType)}
@@ -133,7 +133,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                 <HStack>
                   <Text fontSize="sm">{selectedContentSpec.description}</Text>
                   <Badge colorScheme="blue" size="sm">
-                    Max: {selectedContentSpec.maxLength} chars
+                    최대: {selectedContentSpec.maxLength}자
                   </Badge>
                 </HStack>
               </FormHelperText>
@@ -141,7 +141,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
 
             <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4} width="100%">
               <FormControl>
-                <FormLabel>Tone</FormLabel>
+                <FormLabel>톤 앤 매너</FormLabel>
                 <Select
                   value={formData.tone}
                   onChange={(e) => handleInputChange('tone', e.target.value as ContentTone)}
@@ -155,45 +155,45 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               </FormControl>
 
               <FormControl>
-                <FormLabel>Length</FormLabel>
+                <FormLabel>길이</FormLabel>
                 <Select
                   value={formData.length}
                   onChange={(e) => handleInputChange('length', e.target.value)}
                 >
-                  <option value="short">Short</option>
-                  <option value="medium">Medium</option>
-                  <option value="long">Long</option>
+                  <option value="short">짧게</option>
+                  <option value="medium">보통</option>
+                  <option value="long">길게</option>
                 </Select>
               </FormControl>
 
               <FormControl>
-                <FormLabel>Include Hashtags</FormLabel>
+                <FormLabel>해시태그 포함</FormLabel>
                 <Select
                   value={formData.includeHashtags ? 'yes' : 'no'}
                   onChange={(e) => handleInputChange('includeHashtags', e.target.value === 'yes')}
                 >
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
+                  <option value="yes">예</option>
+                  <option value="no">아니오</option>
                 </Select>
                 <FormHelperText>
-                  Recommended: {selectedContentSpec.recommendedHashtags} hashtags
+                  추천: {selectedContentSpec.recommendedHashtags}개 해시태그
                 </FormHelperText>
               </FormControl>
             </Grid>
 
             <FormControl>
-              <FormLabel>Target Audience (Optional)</FormLabel>
+              <FormLabel>타겟 오디언스 (선택사항)</FormLabel>
               <Input
-                placeholder="e.g., Entrepreneurs, Students, Tech enthusiasts..."
+                placeholder="예: 창업가, 학생, 직장인, IT 전문가..."
                 value={formData.targetAudience}
                 onChange={(e) => handleInputChange('targetAudience', e.target.value)}
               />
             </FormControl>
 
             <FormControl>
-              <FormLabel>Additional Notes (Optional)</FormLabel>
+              <FormLabel>추가 요청사항 (선택사항)</FormLabel>
               <Textarea
-                placeholder="Any specific requirements, style preferences, or additional context..."
+                placeholder="특별한 요구사항, 스타일 선호도, 추가 내용등을 입력하세요..."
                 value={formData.additionalNotes}
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
                 rows={3}
@@ -206,9 +206,9 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               size="lg"
               width="100%"
               isLoading={isLoading}
-              loadingText="Generating Content..."
+              loadingText="콘텐츠 생성 중..."
             >
-              Generate {CONTENT_TYPE_LABELS[formData.contentType]}
+              {CONTENT_TYPE_LABELS[formData.contentType]} 생성하기
             </Button>
           </VStack>
         </form>

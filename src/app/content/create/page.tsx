@@ -73,15 +73,15 @@ export default function CreateContentPage() {
       setGeneratedContent(formattedResult)
       
       toast({
-        title: 'Content Generated!',
-        description: 'Your AI-powered content has been created and saved.',
+        title: '콘텐츠 생성 완료!',
+        description: 'AI가 생성한 콘텐츠가 성공적으로 저장되었습니다.',
         status: 'success',
         duration: 3000,
       })
     } catch (error: any) {
       toast({
-        title: 'Generation Failed',
-        description: error.message || 'There was an error generating your content. Please try again.',
+        title: '콘텐츠 생성 실패',
+        description: error.message || '콘텐츠 생성 중 오류가 발생했습니다. 다시 시도해주세요.',
         status: 'error',
         duration: 5000,
       })
@@ -92,8 +92,8 @@ export default function CreateContentPage() {
 
   const handleSaveContent = () => {
     toast({
-      title: 'Content Already Saved',
-      description: 'Your content was saved automatically when generated.',
+      title: '콘텐츠 저장 완료',
+      description: '콘텐츠가 생성될 때 자동으로 저장되었습니다.',
       status: 'info',
       duration: 3000,
     })
@@ -102,8 +102,8 @@ export default function CreateContentPage() {
   const handleScheduleContent = () => {
     // Here you would open a scheduling modal or redirect to schedule page
     toast({
-      title: 'Feature Coming Soon',
-      description: 'Content scheduling will be available soon!',
+      title: '스케줄 기능 준비중',
+      description: '콘텐츠 스케줄링 기능이 곧 출시됩니다!',
       status: 'info',
       duration: 3000,
     })
@@ -114,11 +114,11 @@ export default function CreateContentPage() {
       <Layout>
         <VStack spacing={8} align="stretch">
           <Box>
-            <Heading size="xl" mb={2}>
-              Create Content
+            <Heading size="xl" mb={2} color="gray.800">
+              📝 콘텐츠 생성
             </Heading>
             <Text color="gray.600" fontSize="lg">
-              Generate AI-powered content for your social media platforms
+              AI를 활용해 소셜미디어용 콘텐츠를 생성하세요
             </Text>
           </Box>
 
@@ -138,7 +138,7 @@ export default function CreateContentPage() {
                     <VStack spacing={6} align="stretch">
                       <Box>
                         <HStack justify="space-between" mb={4}>
-                          <Heading size="md">Generated Content</Heading>
+                          <Heading size="md" color="gray.800">생성된 콘텐츠</Heading>
                           <HStack spacing={2}>
                             <Badge colorScheme="blue">
                               {CONTENT_TYPE_LABELS[generatedContent.contentType as keyof typeof CONTENT_TYPE_LABELS]}
@@ -151,11 +151,11 @@ export default function CreateContentPage() {
                         
                         <Box mb={4}>
                           <Text fontSize="sm" fontWeight="semibold" mb={2}>
-                            Topic: {generatedContent.topic}
+                            주제: {generatedContent.topic}
                           </Text>
                           <HStack spacing={4} fontSize="sm" color="gray.600">
-                            <Text>Words: {generatedContent.wordCount}</Text>
-                            <Text>Read time: ~{generatedContent.estimatedReadTime} min</Text>
+                            <Text>단어 수: {generatedContent.wordCount}개</Text>
+                            <Text>읽는 시간: 약 {generatedContent.estimatedReadTime}분</Text>
                           </HStack>
                         </Box>
                       </Box>
@@ -182,7 +182,7 @@ export default function CreateContentPage() {
                           width="100%"
                           onClick={handleSaveContent}
                         >
-                          Save as Draft
+                          임시저장
                         </Button>
                         
                         <HStack spacing={3} width="100%">
@@ -192,7 +192,7 @@ export default function CreateContentPage() {
                             flex={1}
                             onClick={handleScheduleContent}
                           >
-                            Schedule Post
+                            스케줄 설정
                           </Button>
                           <Button
                             variant="outline"
@@ -200,7 +200,7 @@ export default function CreateContentPage() {
                             flex={1}
                             onClick={() => setGeneratedContent(null)}
                           >
-                            Generate New
+                            새로 생성
                           </Button>
                         </HStack>
                       </VStack>
@@ -208,23 +208,24 @@ export default function CreateContentPage() {
                       {generatedContent.metadata && (
                         <Box pt={4} fontSize="sm" color="gray.600">
                           {generatedContent.metadata.targetAudience && (
-                            <Text>Target Audience: {generatedContent.metadata.targetAudience}</Text>
+                            <Text>타겟 오디언스: {generatedContent.metadata.targetAudience}</Text>
                           )}
                           {generatedContent.metadata.includeHashtags && (
-                            <Text>Hashtags: Included</Text>
+                            <Text>해시태그: 포함됨</Text>
                           )}
-                          <Text>Length: {generatedContent.metadata.length}</Text>
+                          <Text>길이: {generatedContent.metadata.length}</Text>
                         </Box>
                       )}
                     </VStack>
                   ) : (
                     <VStack spacing={6} py={20} textAlign="center">
                       <Box>
+                        <Text fontSize="6xl" mb={4}>✨</Text>
                         <Heading size="md" color="gray.500" mb={2}>
-                          Your content will appear here
+                          생성된 콘텐츠가 여기에 표시됩니다
                         </Heading>
                         <Text color="gray.400">
-                          Fill out the form on the left and click "Generate" to create AI-powered content
+                          왼쪽 폼을 작성하고 "생성하기" 버튼을 클릭해 AI 콘텐츠를 만들어보세요
                         </Text>
                       </Box>
                     </VStack>
