@@ -16,9 +16,16 @@ import {
   MenuList,
   MenuItem,
   useToast,
+  Tooltip,
+  CircularProgress,
+  CircularProgressLabel,
+  Progress,
+  Flex,
+  Spacer,
 } from '@chakra-ui/react'
-import { EditIcon, DeleteIcon, CalendarIcon, ViewIcon, MoreVertical } from 'lucide-react'
+import { EditIcon, DeleteIcon, CalendarIcon, ViewIcon, MoreVertical, Star, TrendingUp } from 'lucide-react'
 import { Content } from '@/types'
+import { useState } from 'react'
 
 interface ContentCardProps {
   content: Content
@@ -26,6 +33,7 @@ interface ContentCardProps {
   onDelete?: (contentId: string) => void
   onSchedule?: (content: Content) => void
   onView?: (content: Content) => void
+  onEvaluate?: (contentId: string) => void
 }
 
 export default function ContentCard({
@@ -34,8 +42,10 @@ export default function ContentCard({
   onDelete,
   onSchedule,
   onView,
+  onEvaluate,
 }: ContentCardProps) {
   const toast = useToast()
+  const [isEvaluating, setIsEvaluating] = useState(false)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -84,7 +94,72 @@ export default function ContentCard({
       case 'view':
         onView?.(content)
         break
+      case 'evaluate':
+        handleEvaluate()
+        break
     }
+  }
+
+  const handleEvaluate = async () => {
+    if (isEvaluating) return
+    
+    setIsEvaluating(true)
+    try {
+      await onEvaluate?.(content.id)
+      toast({
+        title: '평가 완료',
+        description: 'AI 평가가 성공적으로 완료되었습니다.',
+        status: 'success',
+        duration: 3000,
+      })
+    } catch (error) {
+      toast({
+        title: '평가 실패',
+        description: 'AI 평가에 실패했습니다. 다시 시도해주세요.',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsEvaluating(false)
+    }
+  }
+
+  const renderRatingStars = (rating: number) => {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(
+          <Star
+            key={i}
+            size={12}
+            fill="gold"
+            color="gold"
+          />
+        )
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(
+          <Star
+            key={i}
+            size={12}
+            fill="url(#halfGrad)"
+            color="gold"
+          />
+        )
+      } else {
+        stars.push(
+          <Star
+            key={i}
+            size={12}
+            color="gray"
+          />
+        )
+      }
+    }
+
+    return stars
   }
 
   return (
@@ -127,6 +202,12 @@ export default function ContentCard({
                   Schedule
                 </MenuItem>
               )}
+              {!content.ai_rating && (
+                <MenuItem onClick={() => handleAction('evaluate')} isDisabled={isEvaluating}>
+                  <TrendingUp size={16} style={{ marginRight: '8px' }} />
+                  {isEvaluating ? 'AI 평가 중...' : 'AI 평가'}
+                </MenuItem>
+              )}
               <MenuItem onClick={() => handleAction('delete')} color="red.500">
                 <DeleteIcon size={16} style={{ marginRight: '8px' }} />
                 Delete
@@ -140,6 +221,63 @@ export default function ContentCard({
         <Text fontSize="sm" color="gray.600" noOfLines={3} mb={3}>
           {content.content}
         </Text>
+        
+        {/* AI 평가 정보 */}
+        {content.ai_rating && (
+          <Box mb={3} p={3} bg="gray.50" borderRadius="md">
+            <Flex align="center" mb={2}>
+              <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                AI 평가
+              </Text>
+              <Spacer />
+              <HStack spacing={1}>
+                {renderRatingStars(content.ai_rating)}
+                <Text fontSize="sm" fontWeight="bold" color="gray.700" ml={1}>
+                  {content.ai_rating.toFixed(1)}
+                </Text>
+              </HStack>
+            </Flex>
+            
+            {content.ai_feedback && (
+              <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                {content.ai_feedback}
+              </Text>
+            )}
+            
+            {content.ai_evaluation_criteria && (
+              <VStack spacing={1} mt={2} align="stretch">
+                {Object.entries(content.ai_evaluation_criteria).map(([key, value]) => (
+                  <Flex key={key} align="center" fontSize="xs">
+                    <Text color="gray.500" minW="60px">
+                      {key === 'relevance' ? '관련성' :
+                       key === 'quality' ? '품질' :
+                       key === 'engagement' ? '참여도' :
+                       key === 'creativity' ? '창의성' :
+                       key === 'clarity' ? '명확성' :
+                       key === 'tone_accuracy' ? '톤 정확성' : key}:
+                    </Text>
+                    <Progress 
+                      value={(value as number) * 20} 
+                      size="sm" 
+                      colorScheme="blue" 
+                      flex={1} 
+                      mx={2}
+                    />
+                    <Text color="gray.600" minW="20px">
+                      {value}/5
+                    </Text>
+                  </Flex>
+                ))}
+              </VStack>
+            )}
+            
+            {content.evaluated_at && (
+              <Text fontSize="xs" color="gray.400" mt={2}>
+                평가 일시: {new Date(content.evaluated_at).toLocaleDateString()}
+              </Text>
+            )}
+          </Box>
+        )}
         
         <VStack align="start" spacing={1}>
           <Text fontSize="xs" color="gray.500">
