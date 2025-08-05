@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClientComponentClient } from '@/lib/supabase'
-import { Content, ContentType, ContentTone } from '@/types'
+import { Content, ContentType, ContentTone, ContentStatus } from '@/types'
 import { useAuth } from './useAuth'
 
 // DOGFOODING MODE: Mock data
@@ -76,13 +76,20 @@ export function useContents() {
       setLoading(true)
       setError(null)
 
-      // DOGFOODING MODE: Use mock data instead of Supabase
-      console.log('DOGFOODING MODE: Using mock data')
+      // DOGFOODING MODE: Combine saved contents with mock data
+      console.log('DOGFOODING MODE: Using mock data with saved contents')
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      setContents(MOCK_CONTENTS)
+      // Get saved contents from localStorage
+      const savedContents = localStorage.getItem('saved_contents')
+      const userSavedContents = savedContents ? JSON.parse(savedContents) : []
+      
+      // Combine mock data with saved contents (saved contents first)
+      const allContents = [...userSavedContents, ...MOCK_CONTENTS]
+      
+      setContents(allContents)
     } catch (error: any) {
       console.error('Error fetching contents:', error)
       setError(error.message)
@@ -131,15 +138,76 @@ export function useContents() {
     if (!user) throw new Error('User not authenticated')
 
     try {
-      // DOGFOODING MODE: Mock delete operation
-      console.log('DOGFOODING MODE: Mock delete content', contentId)
+      // DOGFOODING MODE: Delete from localStorage if it's a saved content
+      console.log('DOGFOODING MODE: Delete content', contentId)
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300))
       
+      // If it's a saved content (starts with 'saved_'), remove from localStorage
+      if (contentId.startsWith('saved_')) {
+        const savedContents = localStorage.getItem('saved_contents')
+        if (savedContents) {
+          const userSavedContents = JSON.parse(savedContents)
+          const updatedContents = userSavedContents.filter((content: Content) => content.id !== contentId)
+          localStorage.setItem('saved_contents', JSON.stringify(updatedContents))
+        }
+      }
+      
       setContents(prev => prev.filter(content => content.id !== contentId))
     } catch (error: any) {
       console.error('Error deleting content:', error)
+      throw error
+    }
+  }
+
+  const saveContent = async (contentData: {
+    title?: string
+    content: string
+    content_type: ContentType
+    tone: ContentTone
+    topic: string
+    status?: string
+    target_audience?: string
+    additional_instructions?: string
+    tags?: string[]
+    word_count?: number
+    estimated_read_time?: number
+  }) => {
+    if (!user) throw new Error('User not authenticated')
+
+    try {
+      // Create a new content object with all required fields
+      const newContent: Content = {
+        id: `saved_${Date.now()}`,
+        user_id: user.id,
+        title: contentData.title || `${contentData.topic} - ${new Date().toLocaleDateString('ko-KR')}`,
+        content: contentData.content,
+        content_type: contentData.content_type,
+        tone: contentData.tone,
+        status: (contentData.status as ContentStatus) || 'draft',
+        topic: contentData.topic,
+        tags: contentData.tags || [],
+        word_count: contentData.word_count || contentData.content.split(/\s+/).length,
+        estimated_read_time: contentData.estimated_read_time || Math.ceil(contentData.content.split(/\s+/).length / 200),
+        auto_generated: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        metadata: contentData.target_audience ? { target_audience: contentData.target_audience } : undefined
+      }
+
+      // Save to localStorage for demo purposes
+      const savedContents = localStorage.getItem('saved_contents')
+      const userSavedContents = savedContents ? JSON.parse(savedContents) : []
+      userSavedContents.unshift(newContent)
+      localStorage.setItem('saved_contents', JSON.stringify(userSavedContents))
+
+      // Update local state
+      setContents(prev => [newContent, ...prev])
+      
+      return newContent
+    } catch (error: any) {
+      console.error('Error saving content:', error)
       throw error
     }
   }
@@ -177,6 +245,7 @@ export function useContents() {
     loading,
     error,
     createContent,
+    saveContent,
     deleteContent,
     updateContent,
     refetch: fetchContents
