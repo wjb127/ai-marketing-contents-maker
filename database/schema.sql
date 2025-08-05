@@ -56,6 +56,12 @@ CREATE TABLE public.contents (
     auto_generated BOOLEAN DEFAULT FALSE NOT NULL,
     schedule_id UUID,
     metadata JSONB DEFAULT '{}' NOT NULL,
+    -- Evaluation fields
+    ai_rating DECIMAL(2,1) CHECK (ai_rating >= 1.0 AND ai_rating <= 5.0),
+    ai_feedback TEXT,
+    ai_evaluation_criteria JSONB DEFAULT '{}' NOT NULL,
+    evaluated_at TIMESTAMP WITH TIME ZONE,
+    evaluation_model TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );

@@ -89,6 +89,47 @@ export default function ContentLibraryPage() {
     })
   }
 
+  const handleEvaluate = async (contentId: string) => {
+    try {
+      const response = await fetch('/api/content/evaluate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content_id: contentId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('평가 요청에 실패했습니다')
+      }
+
+      const result = await response.json()
+      
+      if (result.already_evaluated) {
+        toast({
+          title: '이미 평가됨',
+          description: '이 콘텐츠는 이미 AI 평가가 완료되었습니다.',
+          status: 'info',
+          duration: 3000,
+        })
+      } else {
+        toast({
+          title: '평가 완료',
+          description: `AI 평가가 완료되었습니다. 점수: ${result.rating.toFixed(1)}/5`,
+          status: 'success',
+          duration: 5000,
+        })
+      }
+      
+      // 페이지 새로고침하여 업데이트된 평가 정보 표시
+      window.location.reload()
+      
+    } catch (error) {
+      console.error('Evaluation error:', error)
+      throw error
+    }
+  }
+
   const filteredContents = contents.filter(content => {
     const matchesSearch = (content.topic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.content.toLowerCase().includes(searchTerm.toLowerCase())
@@ -255,6 +296,7 @@ export default function ContentLibraryPage() {
                     onDelete={handleDelete}
                     onSchedule={handleSchedule}
                     onView={handleView}
+                    onEvaluate={handleEvaluate}
                   />
                 ))}
               </SimpleGrid>

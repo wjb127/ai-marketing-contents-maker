@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { ContentType, ContentTone } from '@/types'
 import { CONTENT_TYPE_SPECS } from '@/utils/constants'
+import { evaluateAndSaveContent } from '@/lib/evaluation'
 
 const getPromptTemplate = (
   contentType: ContentType,
@@ -182,6 +183,15 @@ export async function POST(request: NextRequest) {
     }
 
     // DOGFOODING MODE: Skip updating user's monthly content count
+
+    // 자동 평가 수행 (백그라운드에서 실행)
+    try {
+      await evaluateAndSaveContent(contentData.id)
+      console.log('Content evaluation completed for:', contentData.id)
+    } catch (evaluationError) {
+      console.error('Failed to evaluate content automatically:', evaluationError)
+      // 평가 실패해도 콘텐츠 생성은 성공으로 처리
+    }
 
     return NextResponse.json(contentData)
   } catch (error) {
