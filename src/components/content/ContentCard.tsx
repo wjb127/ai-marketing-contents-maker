@@ -50,16 +50,21 @@ export default function ContentCard({
     }
   }
 
-  const getPlatformColor = (platform: string) => {
-    switch (platform) {
-      case 'twitter':
+  const getContentTypeColor = (contentType: string) => {
+    switch (contentType) {
+      case 'x_post':
+      case 'thread':
         return 'blue'
-      case 'instagram':
+      case 'instagram_reel_script':
         return 'pink'
-      case 'linkedin':
+      case 'linkedin_post':
         return 'blue'
-      case 'facebook':
+      case 'facebook_post':
         return 'blue'
+      case 'blog_post':
+        return 'purple'
+      case 'youtube_script':
+        return 'red'
       default:
         return 'gray'
     }
@@ -91,8 +96,8 @@ export default function ContentCard({
               {content.title}
             </Text>
             <HStack spacing={2}>
-              <Badge colorScheme={getPlatformColor(content.platform)} size="sm">
-                {content.platform.toUpperCase()}
+              <Badge colorScheme={getContentTypeColor(content.content_type)} size="sm">
+                {content.content_type.replace('_', ' ').toUpperCase()}
               </Badge>
               <Badge colorScheme={getStatusColor(content.status)} size="sm">
                 {content.status.toUpperCase()}
