@@ -50,8 +50,34 @@ export interface Content {
     target_audience?: string
     seo_keywords?: string[]
   }
+  // Evaluation fields
+  ai_rating?: number
+  ai_feedback?: string
+  ai_evaluation_criteria?: ContentEvaluationCriteria
+  evaluated_at?: string
+  evaluation_model?: string
   created_at: string
   updated_at: string
+}
+
+export interface ContentEvaluationCriteria {
+  relevance?: number     // 1-5: 주제와의 관련성
+  quality?: number       // 1-5: 콘텐츠 품질
+  engagement?: number    // 1-5: 참여도 예상
+  creativity?: number    // 1-5: 창의성
+  clarity?: number       // 1-5: 명확성
+  tone_accuracy?: number // 1-5: 톤 정확성
+}
+
+export interface ContentEvaluationRequest {
+  content_id: string
+}
+
+export interface ContentEvaluationResponse {
+  rating: number
+  feedback: string
+  criteria: ContentEvaluationCriteria
+  evaluation_model: string
 }
 
 export interface Schedule {

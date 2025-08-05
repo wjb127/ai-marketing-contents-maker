@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
 import { getScheduledPromptTemplate } from '@/utils/prompt-templates'
+import { evaluateAndSaveContent } from '@/lib/evaluation'
 
 async function handler(request: NextRequest) {
   try {
@@ -108,7 +109,7 @@ async function handler(request: NextRequest) {
       : ''
 
     // 콘텐츠 저장
-    const { error: contentError } = await supabase
+    const { data: savedContent, error: contentError } = await supabase
       .from('contents')
       .insert({
         user_id: schedule.user_id,
@@ -121,10 +122,21 @@ async function handler(request: NextRequest) {
         status: 'draft',
         schedule_id: scheduleId
       })
+      .select()
+      .single()
 
-    if (contentError) {
+    if (contentError || !savedContent) {
       console.error('Failed to save content:', contentError)
       throw contentError
+    }
+
+    // 자동 평가 수행 (백그라운드에서 실행)
+    try {
+      await evaluateAndSaveContent(savedContent.id)
+      console.log('Scheduled content evaluation completed for:', savedContent.id)
+    } catch (evaluationError) {
+      console.error('Failed to evaluate scheduled content automatically:', evaluationError)
+      // 평가 실패해도 콘텐츠 생성은 성공으로 처리
     }
 
     // 사용량 업데이트
