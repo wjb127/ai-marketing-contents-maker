@@ -56,13 +56,16 @@ export function useSchedules() {
     topic: string
     target_audience?: string
     additional_instructions?: string
-    frequency: 'daily' | 'weekly' | 'monthly'
+    frequency: 'hourly' | '3hours' | '6hours' | 'daily' | 'weekly' | 'monthly'
     time_of_day: string
     timezone: string
+    settings?: any
   }) => {
     if (!user) throw new Error('User not authenticated')
 
     try {
+      console.log('Creating schedule with data:', scheduleData)
+      
       // API를 통해 스케줄 생성 (QStash 예약 포함)
       const response = await fetch('/api/schedule/create', {
         method: 'POST',
@@ -72,12 +75,16 @@ export function useSchedules() {
         body: JSON.stringify(scheduleData),
       })
 
+      console.log('Schedule create response status:', response.status)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create schedule')
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+        console.error('Schedule creation failed:', errorData)
+        throw new Error(errorData.error || `Failed to create schedule (${response.status})`)
       }
 
       const data = await response.json()
+      console.log('Schedule created successfully:', data)
       setSchedules(prev => [data, ...prev])
       return data
     } catch (error: any) {

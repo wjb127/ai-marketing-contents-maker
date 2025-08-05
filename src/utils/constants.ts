@@ -50,6 +50,9 @@ export const CONTENT_STATUS = {
 } as const
 
 export const SCHEDULE_FREQUENCY = {
+  HOURLY: 'hourly',
+  THREE_HOURS: '3hours',
+  SIX_HOURS: '6hours',
   DAILY: 'daily',
   WEEKLY: 'weekly',
   BI_WEEKLY: 'bi_weekly',
@@ -57,10 +60,13 @@ export const SCHEDULE_FREQUENCY = {
 } as const
 
 export const FREQUENCY_LABELS = {
-  [SCHEDULE_FREQUENCY.DAILY]: 'Daily',
-  [SCHEDULE_FREQUENCY.WEEKLY]: 'Weekly',
-  [SCHEDULE_FREQUENCY.BI_WEEKLY]: 'Bi-weekly',
-  [SCHEDULE_FREQUENCY.MONTHLY]: 'Monthly',
+  [SCHEDULE_FREQUENCY.HOURLY]: '매시간',
+  [SCHEDULE_FREQUENCY.THREE_HOURS]: '3시간마다',
+  [SCHEDULE_FREQUENCY.SIX_HOURS]: '6시간마다',
+  [SCHEDULE_FREQUENCY.DAILY]: '매일',
+  [SCHEDULE_FREQUENCY.WEEKLY]: '주간',
+  [SCHEDULE_FREQUENCY.BI_WEEKLY]: '격주',
+  [SCHEDULE_FREQUENCY.MONTHLY]: '월간',
 } as const
 
 export const SUBSCRIPTION_PLAN_TYPES = {

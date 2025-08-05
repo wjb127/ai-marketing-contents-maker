@@ -85,13 +85,24 @@ async function handler(request: NextRequest) {
     }
 
     // AI로 콘텐츠 생성
-    const prompt = getScheduledPromptTemplate(
-      schedule.content_type,
-      schedule.content_tone,
-      schedule.topic,
-      schedule.target_audience,
-      schedule.additional_instructions
-    )
+    let prompt
+    
+    // 설정에서 프롬프트 타입 확인
+    const promptSettings = schedule.settings || {}
+    
+    if (promptSettings.promptType === 'custom' && promptSettings.customPrompt) {
+      // 커스텀 프롬프트 사용
+      prompt = promptSettings.customPrompt
+    } else {
+      // 자동 프롬프트 사용
+      prompt = getScheduledPromptTemplate(
+        schedule.content_type,
+        schedule.content_tone,
+        schedule.topics?.[0] || '',
+        schedule.target_audience,
+        schedule.additional_instructions
+      )
+    }
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -113,14 +124,14 @@ async function handler(request: NextRequest) {
       .from('contents')
       .insert({
         user_id: schedule.user_id,
-        type: schedule.content_type,
+        title: `${schedule.name} - 자동 생성 콘텐츠`,
+        content_type: schedule.content_type,
         tone: schedule.content_tone,
-        topic: schedule.topic,
+        topic: schedule.topics?.[0] || '',
         content: generatedContent,
-        target_audience: schedule.target_audience,
-        additional_instructions: schedule.additional_instructions,
         status: 'draft',
-        schedule_id: scheduleId
+        schedule_id: scheduleId,
+        auto_generated: true
       })
       .select()
       .single()

@@ -50,36 +50,40 @@ import Layout from '@/components/layout/Layout'
 import { useAuth } from '@/hooks/useAuth'
 import { useUser } from '@/hooks/useUser'
 import { useSchedules } from '@/hooks/useSchedules'
-import { PLAN_LIMITS, CONTENT_TYPE_LABELS, TONE_LABELS } from '@/utils/constants'
+import { usePrompts } from '@/hooks/usePrompts'
+import { PLAN_LIMITS, CONTENT_TYPE_LABELS, TONE_LABELS, FREQUENCY_LABELS } from '@/utils/constants'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
-interface PromptTemplate {
-  id: string
-  name: string
-  topic: string
-  contentType: string
-  tone: string
-  targetAudience: string
-  additionalInstructions: string
-  createdAt: string
-}
 
 export default function SchedulePage() {
   const { user: authUser } = useAuth()
   const { user } = useUser()
-  const { schedules, loading, error, createSchedule, toggleSchedule, deleteSchedule } = useSchedules()
+  const { schedules, loading, error, createSchedule, toggleSchedule, deleteSchedule, updateSchedule } = useSchedules()
+  const { 
+    prompts: promptTemplates, 
+    loading: promptsLoading, 
+    createPrompt, 
+    updatePrompt, 
+    deletePrompt, 
+    migrateFromLocalStorage 
+  } = usePrompts()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { 
     isOpen: isPromptModalOpen, 
     onOpen: onPromptModalOpen, 
     onClose: onPromptModalClose 
   } = useDisclosure()
+  const {
+    isOpen: isScheduleEditOpen,
+    onOpen: onScheduleEditOpen,
+    onClose: onScheduleEditClose
+  } = useDisclosure()
   const toast = useToast()
 
-  // 프롬프트 템플릿 상태
-  const [promptTemplates, setPromptTemplates] = useState<PromptTemplate[]>([])
+  // 프롬프트 템플릿 상태 (이제 usePrompts 훅에서 관리)
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [selectedSchedule, setSelectedSchedule] = useState<any>(null)
 
   // 폼 상태
   const [formData, setFormData] = useState({
@@ -89,6 +93,22 @@ export default function SchedulePage() {
     tone: 'professional',
     targetAudience: '',
     additionalInstructions: '',
+    promptType: 'auto' as 'auto' | 'custom',
+    customPrompt: '',
+    frequency: 'daily',
+    timeOfDay: '09:00',
+    isActive: true
+  })
+
+  const [scheduleFormData, setScheduleFormData] = useState({
+    name: '',
+    topic: '',
+    contentType: 'x_post',
+    tone: 'professional',
+    targetAudience: '',
+    additionalInstructions: '',
+    promptType: 'auto' as 'auto' | 'custom',
+    customPrompt: '',
     frequency: 'daily',
     timeOfDay: '09:00',
     isActive: true
@@ -97,23 +117,19 @@ export default function SchedulePage() {
   const userPlan = user?.subscription_plan || 'free'
   const planLimits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS]
 
-  // 프롬프트 템플릿 로드
+  // 기존 localStorage 데이터 마이그레이션
   useEffect(() => {
-    const savedPrompts = localStorage.getItem('promptTemplates')
-    if (savedPrompts) {
-      setPromptTemplates(JSON.parse(savedPrompts))
+    const hasLocalData = localStorage.getItem('promptTemplates')
+    if (hasLocalData && !promptsLoading && promptTemplates.length === 0) {
+      migrateFromLocalStorage()
     }
-  }, [])
+  }, [promptsLoading, promptTemplates.length, migrateFromLocalStorage])
 
-  // 프롬프트 템플릿 저장
-  const savePromptTemplates = (templates: PromptTemplate[]) => {
-    setPromptTemplates(templates)
-    localStorage.setItem('promptTemplates', JSON.stringify(templates))
-  }
 
   // 프롬프트 저장/업데이트
-  const handleSavePrompt = () => {
-    if (!formData.name || !formData.topic) {
+  const handleSavePrompt = async () => {
+    // 자동 프롬프트의 경우 이름과 주제 필수
+    if (formData.promptType === 'auto' && (!formData.name || !formData.topic)) {
       toast({
         title: '입력 오류',
         description: '프롬프트 이름과 주제를 입력해주세요.',
@@ -124,31 +140,58 @@ export default function SchedulePage() {
       return
     }
 
-    const newPrompt: PromptTemplate = {
-      id: isEditing && selectedPrompt ? selectedPrompt.id : Date.now().toString(),
-      name: formData.name,
-      topic: formData.topic,
-      contentType: formData.contentType,
-      tone: formData.tone,
-      targetAudience: formData.targetAudience,
-      additionalInstructions: formData.additionalInstructions,
-      createdAt: isEditing && selectedPrompt ? selectedPrompt.createdAt : new Date().toISOString()
+    // 커스텀 프롬프트의 경우 이름과 커스텀 프롬프트 필수
+    if (formData.promptType === 'custom' && (!formData.name || !formData.customPrompt)) {
+      toast({
+        title: '입력 오류',
+        description: '프롬프트 이름과 커스텀 프롬프트를 입력해주세요.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+      return
     }
 
+    const promptData = {
+      name: formData.name,
+      topic: formData.topic,
+      content_type: formData.contentType,
+      tone: formData.tone,
+      target_audience: formData.targetAudience,
+      additional_instructions: formData.additionalInstructions,
+      prompt_type: formData.promptType,
+      custom_prompt: formData.customPrompt,
+      is_active: true
+    }
+
+    let savedPrompt
     if (isEditing && selectedPrompt) {
-      const updatedPrompts = promptTemplates.map(p => 
-        p.id === selectedPrompt.id ? newPrompt : p
-      )
-      savePromptTemplates(updatedPrompts)
+      savedPrompt = await updatePrompt(selectedPrompt.id, promptData)
     } else {
-      savePromptTemplates([...promptTemplates, newPrompt])
+      savedPrompt = await createPrompt(promptData)
+    }
+
+    // 스케줄 생성이 활성화된 경우 바로 스케줄 생성
+    if (formData.isActive && savedPrompt) {
+      try {
+        await handleCreateSchedule(savedPrompt)
+      } catch (error) {
+        console.error('스케줄 생성 중 오류:', error)
+        toast({
+          title: '스케줄 생성 실패',
+          description: '프롬프트는 저장되었지만 스케줄 생성에 실패했습니다.',
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        })
+      }
     }
 
     resetForm()
     onPromptModalClose()
     toast({
-      title: isEditing ? '프롬프트 수정 완료' : '프롬프트 저장 완료',
-      description: '프롬프트가 성공적으로 저장되었습니다.',
+      title: isEditing ? '프롬프트 수정 완료' : formData.isActive ? '프롬프트 저장 및 스케줄 생성 완료' : '프롬프트 저장 완료',
+      description: formData.isActive ? '프롬프트가 저장되고 자동 스케줄이 생성되었습니다.' : '프롬프트가 성공적으로 저장되었습니다.',
       status: 'success',
       duration: 3000,
       isClosable: true,
@@ -156,28 +199,39 @@ export default function SchedulePage() {
   }
 
   // 프롬프트 삭제
-  const handleDeletePrompt = (promptId: string) => {
-    const updatedPrompts = promptTemplates.filter(p => p.id !== promptId)
-    savePromptTemplates(updatedPrompts)
-    toast({
-      title: '프롬프트 삭제 완료',
-      description: '프롬프트가 삭제되었습니다.',
-      status: 'info',
-      duration: 3000,
-      isClosable: true,
-    })
+  const handleDeletePrompt = async (promptId: string) => {
+    try {
+      await deletePrompt(promptId)
+      toast({
+        title: '프롬프트 삭제 완료',
+        description: '프롬프트가 삭제되었습니다.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: '프롬프트 삭제 실패',
+        description: '프롬프트 삭제 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    }
   }
 
   // 프롬프트 편집
-  const handleEditPrompt = (prompt: PromptTemplate) => {
+  const handleEditPrompt = (prompt: any) => {
     setSelectedPrompt(prompt)
     setFormData({
       name: prompt.name,
       topic: prompt.topic,
-      contentType: prompt.contentType,
+      contentType: prompt.content_type,
       tone: prompt.tone,
-      targetAudience: prompt.targetAudience,
-      additionalInstructions: prompt.additionalInstructions,
+      targetAudience: prompt.target_audience,
+      additionalInstructions: prompt.additional_instructions,
+      promptType: prompt.prompt_type || 'auto',
+      customPrompt: prompt.custom_prompt || '',
       frequency: 'daily',
       timeOfDay: '09:00',
       isActive: true
@@ -186,8 +240,42 @@ export default function SchedulePage() {
     onPromptModalOpen()
   }
 
+  // 스케줄 테스트 (즉시 실행)
+  const handleTestSchedule = async (scheduleId: string) => {
+    try {
+      const response = await fetch('/api/schedule/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scheduleId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('스케줄 실행에 실패했습니다.')
+      }
+
+      toast({
+        title: '스케줄 실행 완료',
+        description: '콘텐츠가 성공적으로 생성되었습니다. 콘텐츠 라이브러리에서 확인하세요.',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (error) {
+      console.error('스케줄 테스트 중 오류:', error)
+      toast({
+        title: '스케줄 실행 실패',
+        description: '스케줄 실행 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
+
   // 스케줄 생성
-  const handleCreateSchedule = async (prompt: PromptTemplate) => {
+  const handleCreateSchedule = async (prompt: any) => {
     if (planLimits.maxSchedules !== -1 && schedules.length >= planLimits.maxSchedules) {
       toast({
         title: '스케줄 한계 도달',
@@ -200,16 +288,24 @@ export default function SchedulePage() {
     }
 
     try {
+      // 프롬프트 정보를 settings에 저장
+      const promptSettings = {
+        promptType: prompt.prompt_type,
+        customPrompt: prompt.custom_prompt,
+        originalPromptId: prompt.id
+      }
+
       await createSchedule({
         name: `${prompt.name} 자동 생성`,
-        content_type: prompt.contentType as any,
+        content_type: prompt.content_type as any,
         content_tone: prompt.tone as any,
         topic: prompt.topic,
-        target_audience: prompt.targetAudience,
-        additional_instructions: prompt.additionalInstructions,
-        frequency: 'daily',
-        time_of_day: '09:00',
-        timezone: 'Asia/Seoul'
+        target_audience: prompt.target_audience,
+        additional_instructions: prompt.additional_instructions,
+        frequency: formData.frequency as any,
+        time_of_day: formData.timeOfDay,
+        timezone: 'Asia/Seoul',
+        settings: promptSettings
       })
       
       toast({
@@ -239,6 +335,8 @@ export default function SchedulePage() {
       tone: 'professional',
       targetAudience: '',
       additionalInstructions: '',
+      promptType: 'auto',
+      customPrompt: '',
       frequency: 'daily',
       timeOfDay: '09:00',
       isActive: true
@@ -249,6 +347,48 @@ export default function SchedulePage() {
 
   const canCreateSchedule = planLimits.maxSchedules === -1 || schedules.length < planLimits.maxSchedules
 
+  // 스케줄 편집 함수
+  const handleUpdateSchedule = async () => {
+    if (!selectedSchedule) return
+
+    try {
+      await updateSchedule(selectedSchedule.id, {
+        name: scheduleFormData.name,
+        content_type: scheduleFormData.contentType as any,
+        content_tone: scheduleFormData.tone as any,
+        topic: scheduleFormData.topic,
+        topics: [scheduleFormData.topic],
+        target_audience: scheduleFormData.targetAudience,
+        additional_instructions: scheduleFormData.additionalInstructions,
+        frequency: scheduleFormData.frequency as any,
+        time_of_day: scheduleFormData.timeOfDay,
+        is_active: scheduleFormData.isActive,
+        settings: {
+          ...selectedSchedule.settings,
+          promptType: scheduleFormData.promptType,
+          customPrompt: scheduleFormData.customPrompt
+        }
+      })
+
+      onScheduleEditClose()
+      toast({
+        title: '스케줄 수정 완료',
+        description: '스케줄이 성공적으로 수정되었습니다.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: '스케줄 수정 실패',
+        description: '스케줄 수정 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    }
+  }
+
   return (
     <ProtectedRoute>
       <Layout>
@@ -258,7 +398,7 @@ export default function SchedulePage() {
             <VStack align="start" spacing={2}>
               <Heading size="xl" color="gray.800">⏰ 스케줄 관리</Heading>
               <Text color="gray.600" fontSize="lg">
-                프롬프트를 저장하고 자동 콘텐츠 생성 스케줄을 설정하세요
+                자동 콘텐츠 생성 스케줄을 관리하세요
               </Text>
             </VStack>
             
@@ -280,9 +420,9 @@ export default function SchedulePage() {
             <Card>
               <CardBody>
                 <Stat>
-                  <StatLabel>저장된 프롬프트</StatLabel>
-                  <StatNumber>{promptTemplates.length}개</StatNumber>
-                  <StatHelpText>생성 준비 완료</StatHelpText>
+                  <StatLabel>전체 스케줄</StatLabel>
+                  <StatNumber>{schedules.length}개</StatNumber>
+                  <StatHelpText>등록된 스케줄</StatHelpText>
                 </Stat>
               </CardBody>
             </Card>
@@ -311,109 +451,9 @@ export default function SchedulePage() {
             </Card>
           </SimpleGrid>
 
-          <Tabs colorScheme="brand">
-            <TabList>
-              <Tab>📝 프롬프트 템플릿</Tab>
-              <Tab>⚡ 활성 스케줄</Tab>
-            </TabList>
-
-            <TabPanels>
-              {/* 프롬프트 템플릿 탭 */}
-              <TabPanel px={0}>
-                {promptTemplates.length === 0 ? (
-                  <Center py={20}>
-                    <VStack spacing={6} textAlign="center">
-                      <Box>
-                        <Text fontSize="6xl" mb={4}>📝</Text>
-                        <Heading size="md" mb={2} color="gray.600">
-                          첫 번째 프롬프트를 만들어보세요
-                        </Heading>
-                        <Text color="gray.500" mb={6}>
-                          프롬프트를 저장하면 언제든지 재사용하고 스케줄을 설정할 수 있어요
-                        </Text>
-                        <Button
-                          leftIcon={<AddIcon />}
-                          colorScheme="brand"
-                          size="lg"
-                          onClick={() => {
-                            resetForm()
-                            onPromptModalOpen()
-                          }}
-                        >
-                          프롬프트 만들기
-                        </Button>
-                      </Box>
-                    </VStack>
-                  </Center>
-                ) : (
-                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                    {promptTemplates.map((prompt) => (
-                      <Card key={prompt.id} shadow="sm" _hover={{ shadow: 'md', transform: 'translateY(-2px)' }} transition="all 0.2s">
-                        <CardHeader pb={3}>
-                          <HStack justify="space-between">
-                            <VStack align="start" spacing={1}>
-                              <Heading size="sm" color="gray.800">{prompt.name}</Heading>
-                              <HStack spacing={2}>
-                                <Badge colorScheme="blue" size="sm">
-                                  {CONTENT_TYPE_LABELS[prompt.contentType as keyof typeof CONTENT_TYPE_LABELS]}
-                                </Badge>
-                                <Badge colorScheme="green" size="sm">
-                                  {TONE_LABELS[prompt.tone as keyof typeof TONE_LABELS]}
-                                </Badge>
-                              </HStack>
-                            </VStack>
-                            <HStack spacing={1}>
-                              <IconButton
-                                aria-label="프롬프트 수정"
-                                icon={<EditIcon />}
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEditPrompt(prompt)}
-                              />
-                              <IconButton
-                                aria-label="프롬프트 삭제"
-                                icon={<DeleteIcon />}
-                                size="sm"
-                                variant="ghost"
-                                colorScheme="red"
-                                onClick={() => handleDeletePrompt(prompt.id)}
-                              />
-                            </HStack>
-                          </HStack>
-                        </CardHeader>
-                        <CardBody pt={0}>
-                          <VStack align="start" spacing={3}>
-                            <Text fontSize="sm" color="gray.600" noOfLines={2}>
-                              <strong>주제:</strong> {prompt.topic}
-                            </Text>
-                            {prompt.targetAudience && (
-                              <Text fontSize="sm" color="gray.600" noOfLines={1}>
-                                <strong>타겟:</strong> {prompt.targetAudience}
-                              </Text>
-                            )}
-                            <Divider />
-                            <Button
-                              size="sm"
-                              colorScheme="brand"
-                              variant="outline"
-                              width="full"
-                              leftIcon={<RepeatIcon />}
-                              onClick={() => handleCreateSchedule(prompt)}
-                              isDisabled={!canCreateSchedule}
-                            >
-                              {canCreateSchedule ? '스케줄 생성' : '플랜 업그레이드 필요'}
-                            </Button>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    ))}
-                  </SimpleGrid>
-                )}
-              </TabPanel>
-
-              {/* 활성 스케줄 탭 */}
-              <TabPanel px={0}>
-                {loading ? (
+          {/* 활성 스케줄 목록 */}
+          <Box>
+            {loading ? (
                   <Center py={20}>
                     <VStack spacing={4}>
                       <Spinner size="lg" color="brand.500" />
@@ -446,17 +486,42 @@ export default function SchedulePage() {
                                 {schedule.is_active ? '활성' : '비활성'}
                               </Badge>
                             </VStack>
-                            <Switch
-                              isChecked={schedule.is_active}
-                              onChange={(e) => toggleSchedule(schedule.id, e.target.checked)}
-                              colorScheme="brand"
-                            />
+                            <HStack spacing={1}>
+                              <IconButton
+                                aria-label="스케줄 편집"
+                                icon={<EditIcon />}
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setSelectedSchedule(schedule)
+                                  setScheduleFormData({
+                                    name: schedule.name,
+                                    topic: schedule.topics?.[0] || schedule.topic || '',
+                                    contentType: schedule.content_type,
+                                    tone: schedule.content_tone || schedule.tone,
+                                    targetAudience: schedule.target_audience || '',
+                                    additionalInstructions: schedule.additional_instructions || '',
+                                    promptType: schedule.settings?.promptType || 'auto',
+                                    customPrompt: schedule.settings?.customPrompt || '',
+                                    frequency: schedule.frequency,
+                                    timeOfDay: schedule.time_of_day || schedule.time,
+                                    isActive: schedule.is_active
+                                  })
+                                  onScheduleEditOpen()
+                                }}
+                              />
+                              <Switch
+                                isChecked={schedule.is_active}
+                                onChange={(e) => toggleSchedule(schedule.id, e.target.checked)}
+                                colorScheme="brand"
+                              />
+                            </HStack>
                           </HStack>
                         </CardHeader>
                         <CardBody pt={0}>
                           <VStack align="start" spacing={2}>
                             <Text fontSize="sm" color="gray.600">
-                              <strong>주제:</strong> {schedule.topic}
+                              <strong>주제:</strong> {schedule.topics?.[0] || schedule.topic || ''}
                             </Text>
                             <Text fontSize="sm" color="gray.600">
                               <strong>빈도:</strong> {schedule.frequency}
@@ -464,25 +529,43 @@ export default function SchedulePage() {
                             <Text fontSize="sm" color="gray.600">
                               <strong>시간:</strong> {schedule.time_of_day}
                             </Text>
-                            <Button
-                              size="sm"
-                              colorScheme="red"
-                              variant="outline"
-                              width="full"
-                              leftIcon={<DeleteIcon />}
-                              onClick={() => deleteSchedule(schedule.id)}
-                            >
-                              스케줄 삭제
-                            </Button>
+                            <Text fontSize="sm" color="gray.600">
+                              <strong>생성 횟수:</strong> {schedule.total_generated || 0}회
+                            </Text>
+                            {schedule.last_run_at && (
+                              <Text fontSize="xs" color="gray.500">
+                                마지막 실행: {new Date(schedule.last_run_at).toLocaleString('ko-KR')}
+                              </Text>
+                            )}
+                            <VStack spacing={2} width="full">
+                              <Button
+                                size="sm"
+                                colorScheme="brand"
+                                variant="outline"
+                                width="full"
+                                leftIcon={<TimeIcon />}
+                                onClick={() => handleTestSchedule(schedule.id)}
+                              >
+                                지금 실행하기
+                              </Button>
+                              <Button
+                                size="sm"
+                                colorScheme="red"
+                                variant="outline"
+                                width="full"
+                                leftIcon={<DeleteIcon />}
+                                onClick={() => deleteSchedule(schedule.id)}
+                              >
+                                스케줄 삭제
+                              </Button>
+                            </VStack>
                           </VStack>
                         </CardBody>
                       </Card>
                     ))}
                   </SimpleGrid>
                 )}
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+          </Box>
 
           {/* 프롬프트 생성/편집 모달 */}
           <Modal isOpen={isPromptModalOpen} onClose={onPromptModalClose} size="2xl">
@@ -493,13 +576,246 @@ export default function SchedulePage() {
               </ModalHeader>
               <ModalCloseButton />
               <ModalBody pb={6}>
+                <Tabs 
+                  colorScheme="brand" 
+                  variant="enclosed"
+                  index={formData.promptType === 'auto' ? 0 : 1}
+                  onChange={(index) => setFormData({...formData, promptType: index === 0 ? 'auto' : 'custom'})}
+                >
+                  <TabList>
+                    <Tab>🤖 자동 프롬프트</Tab>
+                    <Tab>✏️ 커스텀 프롬프트</Tab>
+                  </TabList>
+
+                  <TabPanels>
+                    {/* 자동 프롬프트 탭 */}
+                    <TabPanel px={0}>
+                      <VStack spacing={4} mt={4}>
+                        <Alert status="info" borderRadius="md">
+                          <AlertIcon />
+                          <Box>
+                            <Text fontSize="sm">
+                              <strong>자동 프롬프트:</strong> 입력한 정보를 바탕으로 AI가 최적화된 프롬프트를 자동으로 생성합니다.
+                            </Text>
+                          </Box>
+                        </Alert>
+
+                        <FormControl isRequired>
+                          <FormLabel>프롬프트 이름</FormLabel>
+                          <Input
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            placeholder="예: 마케팅 팁 시리즈"
+                          />
+                        </FormControl>
+
+                        <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
+                          <GridItem>
+                            <FormControl isRequired>
+                              <FormLabel>콘텐츠 타입</FormLabel>
+                              <Select
+                                value={formData.contentType}
+                                onChange={(e) => setFormData({...formData, contentType: e.target.value})}
+                              >
+                                {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (
+                                  <option key={key} value={key}>{label}</option>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </GridItem>
+                          <GridItem>
+                            <FormControl>
+                              <FormLabel>톤앤매너</FormLabel>
+                              <Select
+                                value={formData.tone}
+                                onChange={(e) => setFormData({...formData, tone: e.target.value})}
+                              >
+                                {Object.entries(TONE_LABELS).map(([key, label]) => (
+                                  <option key={key} value={key}>{label}</option>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </GridItem>
+                        </Grid>
+
+                        <FormControl isRequired>
+                          <FormLabel>주제</FormLabel>
+                          <Input
+                            value={formData.topic}
+                            onChange={(e) => setFormData({...formData, topic: e.target.value})}
+                            placeholder="예: 소상공인을 위한 디지털 마케팅 전략"
+                          />
+                        </FormControl>
+
+                        <FormControl>
+                          <FormLabel>타겟 오디언스</FormLabel>
+                          <Input
+                            value={formData.targetAudience}
+                            onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                            placeholder="예: 20-30대 직장인, 스타트업 창업자"
+                          />
+                        </FormControl>
+
+                        <FormControl>
+                          <FormLabel>추가 지시사항</FormLabel>
+                          <Textarea
+                            value={formData.additionalInstructions}
+                            onChange={(e) => setFormData({...formData, additionalInstructions: e.target.value})}
+                            placeholder="AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
+                            rows={4}
+                          />
+                        </FormControl>
+
+                        <Divider />
+
+                        <VStack spacing={4} align="stretch">
+                          <Text fontSize="md" fontWeight="semibold" color="gray.700">
+                            🔄 자동 스케줄 설정 (선택사항)
+                          </Text>
+                          
+                          <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                            <GridItem>
+                              <FormControl>
+                                <FormLabel>실행 빈도</FormLabel>
+                                <Select
+                                  value={formData.frequency}
+                                  onChange={(e) => setFormData({...formData, frequency: e.target.value as any})}
+                                >
+                                  {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </GridItem>
+                            <GridItem>
+                              <FormControl>
+                                <FormLabel>실행 시간</FormLabel>
+                                <Input
+                                  type="time"
+                                  value={formData.timeOfDay}
+                                  onChange={(e) => setFormData({...formData, timeOfDay: e.target.value})}
+                                />
+                              </FormControl>
+                            </GridItem>
+                          </Grid>
+
+                          <FormControl display="flex" alignItems="center">
+                            <Switch
+                              id="create-schedule"
+                              isChecked={formData.isActive}
+                              onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                              colorScheme="brand"
+                            />
+                            <FormLabel htmlFor="create-schedule" ml={3} mb={0}>
+                              프롬프트 저장과 함께 바로 스케줄 생성하기
+                            </FormLabel>
+                          </FormControl>
+                        </VStack>
+                      </VStack>
+                    </TabPanel>
+
+                    {/* 커스텀 프롬프트 탭 */}
+                    <TabPanel px={0}>
+                      <VStack spacing={4} mt={4}>
+                        <Alert status="warning" borderRadius="md">
+                          <AlertIcon />
+                          <Box>
+                            <Text fontSize="sm">
+                              <strong>커스텀 프롬프트:</strong> 직접 작성한 프롬프트를 사용합니다. 고급 사용자에게 권장됩니다.
+                            </Text>
+                          </Box>
+                        </Alert>
+
+                        <FormControl isRequired>
+                          <FormLabel>프롬프트 이름</FormLabel>
+                          <Input
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            placeholder="예: 나만의 커스텀 프롬프트"
+                          />
+                        </FormControl>
+
+                        <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
+                          <GridItem>
+                            <FormControl isRequired>
+                              <FormLabel>콘텐츠 타입</FormLabel>
+                              <Select
+                                value={formData.contentType}
+                                onChange={(e) => setFormData({...formData, contentType: e.target.value})}
+                              >
+                                {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (
+                                  <option key={key} value={key}>{label}</option>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </GridItem>
+                          <GridItem>
+                            <FormControl>
+                              <FormLabel>톤앤매너</FormLabel>
+                              <Select
+                                value={formData.tone}
+                                onChange={(e) => setFormData({...formData, tone: e.target.value})}
+                              >
+                                {Object.entries(TONE_LABELS).map(([key, label]) => (
+                                  <option key={key} value={key}>{label}</option>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </GridItem>
+                        </Grid>
+
+                        <FormControl isRequired>
+                          <FormLabel>커스텀 프롬프트</FormLabel>
+                          <Textarea
+                            value={formData.customPrompt || ''}
+                            onChange={(e) => setFormData({...formData, customPrompt: e.target.value})}
+                            placeholder="AI에게 전달할 전체 프롬프트를 직접 작성하세요. 예:&#10;&#10;다음 조건에 맞는 마케팅 콘텐츠를 작성해주세요:&#10;- 대상: 20-30대 직장인&#10;- 목적: 브랜드 인지도 향상&#10;- 스타일: 친근하고 유머러스하게&#10;- 길이: 200-300자 내외"
+                            rows={8}
+                            resize="vertical"
+                          />
+                        </FormControl>
+
+                        <Alert status="info" borderRadius="md">
+                          <AlertIcon />
+                          <Box>
+                            <Text fontSize="sm">
+                              💡 <strong>팁:</strong> 명확하고 구체적인 지시사항을 포함하면 더 좋은 결과를 얻을 수 있습니다.
+                            </Text>
+                          </Box>
+                        </Alert>
+                      </VStack>
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
+
+                <HStack justify="flex-end" width="full" pt={6} borderTop="1px solid" borderColor="gray.200" mt={6}>
+                  <Button variant="ghost" onClick={onPromptModalClose}>
+                    취소
+                  </Button>
+                  <Button colorScheme="brand" onClick={handleSavePrompt}>
+                    {isEditing ? '수정하기' : '저장하기'}
+                  </Button>
+                </HStack>
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+
+          {/* 스케줄 편집 모달 */}
+          <Modal isOpen={isScheduleEditOpen} onClose={onScheduleEditClose} size="2xl">
+            <ModalOverlay />
+            <ModalContent>
+              <ModalHeader>
+                스케줄 편집
+              </ModalHeader>
+              <ModalCloseButton />
+              <ModalBody pb={6}>
                 <VStack spacing={4}>
                   <FormControl isRequired>
-                    <FormLabel>프롬프트 이름</FormLabel>
+                    <FormLabel>스케줄 이름</FormLabel>
                     <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      placeholder="예: 마케팅 팁 시리즈"
+                      value={scheduleFormData.name}
+                      onChange={(e) => setScheduleFormData({...scheduleFormData, name: e.target.value})}
+                      placeholder="예: 매일 아침 마케팅 팁"
                     />
                   </FormControl>
 
@@ -508,8 +824,8 @@ export default function SchedulePage() {
                       <FormControl isRequired>
                         <FormLabel>콘텐츠 타입</FormLabel>
                         <Select
-                          value={formData.contentType}
-                          onChange={(e) => setFormData({...formData, contentType: e.target.value})}
+                          value={scheduleFormData.contentType}
+                          onChange={(e) => setScheduleFormData({...scheduleFormData, contentType: e.target.value})}
                         >
                           {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (
                             <option key={key} value={key}>{label}</option>
@@ -521,8 +837,8 @@ export default function SchedulePage() {
                       <FormControl>
                         <FormLabel>톤앤매너</FormLabel>
                         <Select
-                          value={formData.tone}
-                          onChange={(e) => setFormData({...formData, tone: e.target.value})}
+                          value={scheduleFormData.tone}
+                          onChange={(e) => setScheduleFormData({...scheduleFormData, tone: e.target.value})}
                         >
                           {Object.entries(TONE_LABELS).map(([key, label]) => (
                             <option key={key} value={key}>{label}</option>
@@ -535,8 +851,8 @@ export default function SchedulePage() {
                   <FormControl isRequired>
                     <FormLabel>주제</FormLabel>
                     <Input
-                      value={formData.topic}
-                      onChange={(e) => setFormData({...formData, topic: e.target.value})}
+                      value={scheduleFormData.topic}
+                      onChange={(e) => setScheduleFormData({...scheduleFormData, topic: e.target.value})}
                       placeholder="예: 소상공인을 위한 디지털 마케팅 전략"
                     />
                   </FormControl>
@@ -544,8 +860,8 @@ export default function SchedulePage() {
                   <FormControl>
                     <FormLabel>타겟 오디언스</FormLabel>
                     <Input
-                      value={formData.targetAudience}
-                      onChange={(e) => setFormData({...formData, targetAudience: e.target.value})}
+                      value={scheduleFormData.targetAudience}
+                      onChange={(e) => setScheduleFormData({...scheduleFormData, targetAudience: e.target.value})}
                       placeholder="예: 20-30대 직장인, 스타트업 창업자"
                     />
                   </FormControl>
@@ -553,22 +869,74 @@ export default function SchedulePage() {
                   <FormControl>
                     <FormLabel>추가 지시사항</FormLabel>
                     <Textarea
-                      value={formData.additionalInstructions}
-                      onChange={(e) => setFormData({...formData, additionalInstructions: e.target.value})}
+                      value={scheduleFormData.additionalInstructions}
+                      onChange={(e) => setScheduleFormData({...scheduleFormData, additionalInstructions: e.target.value})}
                       placeholder="AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
-                      rows={4}
+                      rows={3}
                     />
                   </FormControl>
 
-                  <HStack justify="flex-end" width="full" pt={4}>
-                    <Button variant="ghost" onClick={onPromptModalClose}>
-                      취소
-                    </Button>
-                    <Button colorScheme="brand" onClick={handleSavePrompt}>
-                      {isEditing ? '수정하기' : '저장하기'}
-                    </Button>
-                  </HStack>
+                  {scheduleFormData.promptType === 'custom' && (
+                    <FormControl>
+                      <FormLabel>커스텀 프롬프트</FormLabel>
+                      <Textarea
+                        value={scheduleFormData.customPrompt}
+                        onChange={(e) => setScheduleFormData({...scheduleFormData, customPrompt: e.target.value})}
+                        placeholder="커스텀 프롬프트를 입력하세요"
+                        rows={5}
+                      />
+                    </FormControl>
+                  )}
+
+                  <Divider />
+
+                  <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
+                    <GridItem>
+                      <FormControl>
+                        <FormLabel>실행 빈도</FormLabel>
+                        <Select
+                          value={scheduleFormData.frequency}
+                          onChange={(e) => setScheduleFormData({...scheduleFormData, frequency: e.target.value})}
+                        >
+                          {Object.entries(FREQUENCY_LABELS).map(([key, label]) => (
+                            <option key={key} value={key}>{label}</option>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </GridItem>
+                    <GridItem>
+                      <FormControl>
+                        <FormLabel>실행 시간</FormLabel>
+                        <Input
+                          type="time"
+                          value={scheduleFormData.timeOfDay}
+                          onChange={(e) => setScheduleFormData({...scheduleFormData, timeOfDay: e.target.value})}
+                        />
+                      </FormControl>
+                    </GridItem>
+                  </Grid>
+
+                  <FormControl display="flex" alignItems="center">
+                    <Switch
+                      id="schedule-active"
+                      isChecked={scheduleFormData.isActive}
+                      onChange={(e) => setScheduleFormData({...scheduleFormData, isActive: e.target.checked})}
+                      colorScheme="brand"
+                    />
+                    <FormLabel htmlFor="schedule-active" ml={3} mb={0}>
+                      스케줄 활성화
+                    </FormLabel>
+                  </FormControl>
                 </VStack>
+
+                <HStack justify="flex-end" width="full" pt={6} borderTop="1px solid" borderColor="gray.200" mt={6}>
+                  <Button variant="ghost" onClick={onScheduleEditClose}>
+                    취소
+                  </Button>
+                  <Button colorScheme="brand" onClick={handleUpdateSchedule}>
+                    수정하기
+                  </Button>
+                </HStack>
               </ModalBody>
             </ModalContent>
           </Modal>

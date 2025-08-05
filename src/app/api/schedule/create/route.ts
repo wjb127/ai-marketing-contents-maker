@@ -4,63 +4,92 @@ import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Schedule create API called')
     const supabase = await createClient()
     
     // DOGFOODING MODE: Skip auth check
     const user = { id: '00000000-0000-0000-0000-000000000001' }
 
     const scheduleData = await request.json()
+    console.log('Received schedule data:', scheduleData)
 
     // Validate required fields
     const {
       name,
       content_type,
-      content_tone,
+      content_tone: tone,
       topic,
       target_audience,
       additional_instructions,
       frequency,
       time_of_day,
-      timezone = 'Asia/Seoul'
+      timezone = 'Asia/Seoul',
+      settings = {}
     } = scheduleData
 
-    if (!name || !content_type || !content_tone || !topic || !frequency || !time_of_day) {
+    console.log('Extracted fields:', {
+      name,
+      content_type,
+      tone,
+      topic,
+      frequency,
+      time_of_day
+    })
+
+    if (!name || !content_type || !tone || !topic || !frequency || !time_of_day) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
+    // Map new frequency values to existing enum values for database storage
+    let dbFrequency = frequency
+    if (frequency === 'hourly' || frequency === '3hours' || frequency === '6hours') {
+      dbFrequency = 'daily' // Store as daily but handle differently in QStash scheduling
+    }
+
     // Calculate next run time
     const nextRun = calculateNextRun(frequency, time_of_day, timezone)
+    console.log('Calculated next run time:', nextRun.toISOString())
+
+    // Prepare data for insertion
+    const insertData = {
+      user_id: user.id,
+      name,
+      content_type,
+      tone,
+      topics: [topic], // Convert single topic to array
+      target_audience,
+      additional_instructions,
+      frequency: dbFrequency, // Use mapped frequency for database
+      time: time_of_day,
+      timezone,
+      is_active: true,
+      next_run_at: nextRun.toISOString(),
+      settings: {
+        ...settings,
+        actualFrequency: frequency // Store actual frequency in settings
+      }
+    }
+    console.log('Data to insert:', insertData)
 
     // Create schedule in database
     const { data, error } = await supabase
       .from('schedules')
-      .insert({
-        user_id: user.id,
-        name,
-        content_type,
-        content_tone,
-        topic,
-        target_audience,
-        additional_instructions,
-        frequency,
-        time_of_day,
-        timezone,
-        is_active: true,
-        next_run_at: nextRun.toISOString(),
-      })
+      .insert(insertData)
       .select()
       .single()
 
     if (error) {
-      console.error('Error creating schedule:', error)
+      console.error('Database insertion error:', error)
       return NextResponse.json(
-        { error: 'Failed to create schedule' },
+        { error: `Database error: ${error.message}`, details: error },
         { status: 500 }
       )
     }
+
+    console.log('Schedule created in database:', data)
 
     // Schedule with QStash (only if QStash is configured)
     let qstashScheduled = false

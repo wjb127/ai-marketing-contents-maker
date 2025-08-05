@@ -71,15 +71,22 @@ export async function cancelScheduledGeneration(messageId: string) {
 
 // 다음 실행 시간 계산
 export function calculateNextRun(
-  frequency: 'daily' | 'weekly' | 'monthly',
+  frequency: 'daily' | 'weekly' | 'monthly' | 'hourly' | '3hours' | '6hours',
   timeOfDay: string, // HH:mm format
   timezone: string = 'Asia/Seoul',
   fromDate: Date = new Date()
 ): Date {
-  const [hours, minutes] = timeOfDay.split(':').map(Number)
   const next = new Date(fromDate)
   
-  // 시간 설정
+  // 시간 간격 기반 스케줄링 (hourly, 3hours, 6hours)
+  if (frequency === 'hourly' || frequency === '3hours' || frequency === '6hours') {
+    const hoursToAdd = frequency === 'hourly' ? 1 : frequency === '3hours' ? 3 : 6
+    next.setTime(fromDate.getTime() + (hoursToAdd * 60 * 60 * 1000))
+    return next
+  }
+  
+  // 일일/주간/월간 스케줄링 (기존 로직)
+  const [hours, minutes] = timeOfDay.split(':').map(Number)
   next.setHours(hours, minutes, 0, 0)
   
   // 이미 지난 시간이면 다음 주기로
