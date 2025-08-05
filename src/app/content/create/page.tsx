@@ -22,6 +22,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { CONTENT_TYPE_LABELS } from '@/utils/constants'
 import { useContents } from '@/hooks/useContents'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { ContentType, ContentTone } from '@/types'
 
 interface GeneratedContent {
   content: string
@@ -40,8 +41,9 @@ interface GeneratedContent {
 export default function CreateContentPage() {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const { createContent } = useContents()
+  const { createContent, saveContent } = useContents()
   const toast = useToast()
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleGenerateContent = async (data: ContentFormData) => {
     setIsGenerating(true)
@@ -74,7 +76,7 @@ export default function CreateContentPage() {
       
       toast({
         title: '콘텐츠 생성 완료!',
-        description: 'AI가 생성한 콘텐츠가 성공적으로 저장되었습니다.',
+        description: 'AI가 생성한 콘텐츠를 확인하고 저장하세요.',
         status: 'success',
         duration: 3000,
       })
@@ -90,13 +92,38 @@ export default function CreateContentPage() {
     }
   }
 
-  const handleSaveContent = () => {
-    toast({
-      title: '콘텐츠 저장 완료',
-      description: '콘텐츠가 생성될 때 자동으로 저장되었습니다.',
-      status: 'info',
-      duration: 3000,
-    })
+  const handleSaveContent = async () => {
+    if (!generatedContent) return
+    
+    setIsSaving(true)
+    try {
+      await saveContent({
+        content: generatedContent.content,
+        content_type: generatedContent.contentType as ContentType,
+        tone: generatedContent.tone as ContentTone,
+        topic: generatedContent.topic,
+        target_audience: generatedContent.metadata?.targetAudience,
+        word_count: generatedContent.wordCount,
+        estimated_read_time: generatedContent.estimatedReadTime,
+        status: 'draft'
+      })
+      
+      toast({
+        title: '콘텐츠 저장 완료!',
+        description: '콘텐츠가 성공적으로 저장되었습니다. 라이브러리에서 확인할 수 있습니다.',
+        status: 'success',
+        duration: 4000,
+      })
+    } catch (error: any) {
+      toast({
+        title: '저장 실패',
+        description: error.message || '콘텐츠 저장 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 5000,
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleScheduleContent = () => {
@@ -181,8 +208,10 @@ export default function CreateContentPage() {
                           size="lg"
                           width="100%"
                           onClick={handleSaveContent}
+                          isLoading={isSaving}
+                          loadingText="저장 중..."
                         >
-                          임시저장
+                          콘텐츠 저장
                         </Button>
                         
                         <HStack spacing={3} width="100%">
