@@ -3,6 +3,7 @@ import { verifySignature } from '@upstash/qstash/nextjs'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
+import { getScheduledPromptTemplate } from '@/utils/prompt-templates'
 
 async function handler(request: NextRequest) {
   try {
@@ -83,13 +84,11 @@ async function handler(request: NextRequest) {
     }
 
     // AI로 콘텐츠 생성
-    const prompt = getPromptTemplate(
+    const prompt = getScheduledPromptTemplate(
       schedule.content_type,
       schedule.content_tone,
       schedule.topic,
-      'medium',
       schedule.target_audience,
-      true,
       schedule.additional_instructions
     )
 
@@ -198,51 +197,3 @@ const POST = process.env.QSTASH_CURRENT_SIGNING_KEY
 
 export { POST }
 
-// 프롬프트 템플릿 함수
-function getPromptTemplate(
-  contentType: string,
-  tone: string,
-  topic: string,
-  length: string = 'medium',
-  targetAudience?: string,
-  includeHashtags?: boolean,
-  additionalNotes?: string
-) {
-  let basePrompt = ''
-  
-  switch (contentType) {
-    case 'x_post':
-      basePrompt = `Create a single X (Twitter) post about "${topic}" in a ${tone} tone.
-      
-      - Keep it under 280 characters
-      - Make it engaging and shareable
-      - Use emojis naturally
-      ${includeHashtags ? '- Include 2-3 relevant hashtags' : ''}`
-      break
-      
-    case 'thread':
-      basePrompt = `Create a Twitter thread about "${topic}" in a ${tone} tone.
-      
-      - Format as numbered tweets (1/X, 2/X, etc.)
-      - Start with a hook in the first tweet
-      - 5-7 tweets total
-      - Each tweet under 280 characters
-      - End with a call-to-action`
-      break
-      
-    default:
-      basePrompt = `Generate ${contentType} content about "${topic}" in ${tone} tone.`
-  }
-  
-  if (targetAudience) {
-    basePrompt += `\n- Target audience: ${targetAudience}`
-  }
-  
-  if (additionalNotes) {
-    basePrompt += `\n- Additional instructions: ${additionalNotes}`
-  }
-  
-  basePrompt += `\n\nGenerate engaging, original content. Return only the content without meta-commentary.`
-  
-  return basePrompt
-}
