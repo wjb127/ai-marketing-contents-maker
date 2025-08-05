@@ -150,9 +150,8 @@ const DesktopNav = () => {
           <Popover trigger={'hover'} placement={'bottom-start'}>
             <PopoverTrigger>
               {navItem.href ? (
-                <NextLink href={navItem.href} passHref legacyBehavior>
+                <NextLink href={navItem.href}>
                   <Box
-                    as="a"
                     p={2}
                     fontSize={'sm'}
                     fontWeight={500}
@@ -200,9 +199,8 @@ const DesktopNav = () => {
 
 const DesktopSubNav = ({ label, href, subLabel }: NavItem) => {
   return (
-    <NextLink href={href || '#'} passHref legacyBehavior>
+    <NextLink href={href || '#'}>
       <Box
-        as="a"
         role={'group'}
         display={'block'}
         p={2}
@@ -253,10 +251,9 @@ const MobileNavItem = ({ label, children, href }: NavItem) => {
   return (
     <Stack spacing={4} onClick={children && onToggle}>
       {href ? (
-        <NextLink href={href} passHref legacyBehavior>
+        <NextLink href={href}>
           <Box
             py={2}
-            as="a"
             justifyContent="space-between"
             alignItems="center"
             _hover={{
@@ -302,8 +299,8 @@ const MobileNavItem = ({ label, children, href }: NavItem) => {
           align={'start'}>
           {children &&
             children.map((child) => (
-              <NextLink key={child.label} href={child.href || '#'} passHref legacyBehavior>
-                <Box as="a" py={2}>
+              <NextLink key={child.label} href={child.href || '#'}>
+                <Box py={2}>
                   {child.label}
                 </Box>
               </NextLink>
