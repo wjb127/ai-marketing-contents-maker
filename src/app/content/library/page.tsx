@@ -93,7 +93,7 @@ export default function ContentLibraryPage() {
     const matchesSearch = (content.topic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          content.content.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesType = filterType === 'all' || content.type === filterType
+    const matchesType = filterType === 'all' || content.content_type === filterType
     const matchesStatus = filterStatus === 'all' || content.status === filterStatus
     
     return matchesSearch && matchesType && matchesStatus

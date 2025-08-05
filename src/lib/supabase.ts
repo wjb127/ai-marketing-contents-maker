@@ -16,13 +16,18 @@ export function createClientComponentClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // DOGFOODING MODE: Return mock client if env vars are missing
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase environment variables:', {
-      url: !!supabaseUrl,
-      key: !!supabaseAnonKey,
-      nodeEnv: process.env.NODE_ENV
-    })
-    throw new Error('Missing Supabase environment variables')
+    console.warn('DOGFOODING MODE: Missing Supabase environment variables, using mock client')
+    supabaseClient = {
+      from: () => ({
+        select: () => Promise.resolve({ data: [], error: null }),
+        insert: () => Promise.resolve({ data: null, error: null }),
+        update: () => Promise.resolve({ data: null, error: null }),
+        delete: () => Promise.resolve({ data: null, error: null }),
+      })
+    }
+    return supabaseClient
   }
 
   supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
