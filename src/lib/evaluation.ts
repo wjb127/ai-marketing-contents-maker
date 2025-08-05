@@ -119,15 +119,24 @@ export async function saveEvaluationToDatabase(
 ): Promise<void> {
   const supabase = await createClient()
   
-  const { error } = await supabase
-    .from('contents')
-    .update({
-      ai_rating: evaluation.rating,
-      ai_feedback: evaluation.feedback,
-      ai_evaluation_criteria: evaluation.criteria,
+  // 기본 컬럼들만 업데이트 (존재하는 컬럼만)
+  const updateData: any = {}
+  
+  // 평가 결과를 additional_instructions나 tags에 JSON으로 저장
+  updateData.additional_instructions = JSON.stringify({
+    original: updateData.additional_instructions || '',
+    ai_evaluation: {
+      rating: evaluation.rating,
+      feedback: evaluation.feedback,
+      criteria: evaluation.criteria,
       evaluated_at: new Date().toISOString(),
       evaluation_model: evaluation.evaluation_model
-    })
+    }
+  })
+
+  const { error } = await supabase
+    .from('contents')
+    .update(updateData)
     .eq('id', contentId)
 
   if (error) {
@@ -150,13 +159,20 @@ export async function evaluateAndSaveContent(contentId: string): Promise<Evaluat
     throw new Error('Content not found')
   }
 
-  // 이미 평가된 경우 기존 평가 반환
-  if (content.ai_rating && content.evaluated_at) {
-    return {
-      rating: content.ai_rating,
-      feedback: content.ai_feedback,
-      criteria: content.ai_evaluation_criteria,
-      evaluation_model: content.evaluation_model
+  // 이미 평가된 경우 기존 평가 반환 (JSON에서 파싱)
+  if (content.additional_instructions) {
+    try {
+      const parsed = JSON.parse(content.additional_instructions)
+      if (parsed.ai_evaluation) {
+        return {
+          rating: parsed.ai_evaluation.rating,
+          feedback: parsed.ai_evaluation.feedback,
+          criteria: parsed.ai_evaluation.criteria,
+          evaluation_model: parsed.ai_evaluation.evaluation_model
+        }
+      }
+    } catch (e) {
+      // JSON 파싱 실패시 새로 평가
     }
   }
 

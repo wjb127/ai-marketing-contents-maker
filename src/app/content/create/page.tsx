@@ -14,7 +14,11 @@ import {
   Textarea,
   Badge,
   Divider,
+  Progress,
+  Flex,
+  Spacer,
 } from '@chakra-ui/react'
+import { Star, TrendingUp, Copy } from 'lucide-react'
 import { useState } from 'react'
 import Layout from '@/components/layout/Layout'
 import ContentForm, { ContentFormData } from '@/components/content/ContentForm'
@@ -36,6 +40,20 @@ interface GeneratedContent {
     includeHashtags?: boolean
     length?: string
   }
+  savedContentId?: string
+}
+
+interface EvaluationResult {
+  rating: number
+  feedback: string
+  criteria: {
+    relevance: number
+    quality: number
+    engagement: number
+    creativity: number
+    clarity: number
+    tone_accuracy: number
+  }
 }
 
 export default function CreateContentPage() {
@@ -44,10 +62,14 @@ export default function CreateContentPage() {
   const { createContent, saveContent } = useContents()
   const toast = useToast()
   const [isSaving, setIsSaving] = useState(false)
+  const [isEvaluating, setIsEvaluating] = useState(false)
+  const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null)
+  const [isCopying, setIsCopying] = useState(false)
 
   const handleGenerateContent = async (data: ContentFormData) => {
     setIsGenerating(true)
     setGeneratedContent(null)
+    setEvaluation(null)
 
     try {
       const result = await createContent({
@@ -69,7 +91,8 @@ export default function CreateContentPage() {
           targetAudience: result.target_audience,
           includeHashtags: true,
           length: 'medium'
-        }
+        },
+        savedContentId: result.id
       }
       
       setGeneratedContent(formattedResult)
@@ -126,14 +149,123 @@ export default function CreateContentPage() {
     }
   }
 
-  const handleScheduleContent = () => {
-    // Here you would open a scheduling modal or redirect to schedule page
-    toast({
-      title: '스케줄 기능 준비중',
-      description: '콘텐츠 스케줄링 기능이 곧 출시됩니다!',
-      status: 'info',
-      duration: 3000,
-    })
+  const handleEvaluateContent = async () => {
+    if (!generatedContent) {
+      toast({
+        title: '콘텐츠 없음',
+        description: '평가할 콘텐츠가 없습니다.',
+        status: 'warning',
+        duration: 3000,
+      })
+      return
+    }
+
+    setIsEvaluating(true)
+    try {
+      // 콘텐츠를 먼저 저장
+      if (!generatedContent.savedContentId) {
+        await handleSaveContent()
+        // handleSaveContent가 완료될 때까지 기다리는 대신 직접 API 호출
+      }
+
+      const response = await fetch('/api/content/evaluate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content_id: generatedContent.savedContentId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('평가 요청에 실패했습니다')
+      }
+
+      const result = await response.json()
+      
+      setEvaluation({
+        rating: result.rating,
+        feedback: result.feedback,
+        criteria: result.criteria
+      })
+      
+      toast({
+        title: 'AI 평가 완료!',
+        description: `콘텐츠 평가가 완료되었습니다. 점수: ${result.rating.toFixed(1)}/5`,
+        status: 'success',
+        duration: 4000,
+      })
+    } catch (error: any) {
+      toast({
+        title: '평가 실패',
+        description: error.message || 'AI 평가 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 5000,
+      })
+    } finally {
+      setIsEvaluating(false)
+    }
+  }
+
+  const handleCopyContent = async () => {
+    if (!generatedContent?.content) return
+    
+    setIsCopying(true)
+    try {
+      await navigator.clipboard.writeText(generatedContent.content)
+      toast({
+        title: '복사 완료!',
+        description: '콘텐츠가 클립보드에 복사되었습니다. SNS에 붙여넣기하여 사용하세요.',
+        status: 'success',
+        duration: 3000,
+      })
+    } catch (error) {
+      toast({
+        title: '복사 실패',
+        description: '클립보드 복사에 실패했습니다. 텍스트를 직접 선택하여 복사해주세요.',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
+  const renderRatingStars = (rating: number) => {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(
+          <Star
+            key={i}
+            size={16}
+            fill="gold"
+            color="gold"
+          />
+        )
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(
+          <Star
+            key={i}
+            size={16}
+            fill="url(#halfGrad)"
+            color="gold"
+          />
+        )
+      } else {
+        stars.push(
+          <Star
+            key={i}
+            size={16}
+            color="gray"
+          />
+        )
+      }
+    }
+
+    return stars
   }
 
   return (
@@ -161,7 +293,22 @@ export default function CreateContentPage() {
                 <CardBody>
                   {isGenerating ? (
                     <LoadingSpinner text="Generating your content..." />
-                  ) : generatedContent ? (
+                  ) : (
+                    <VStack spacing={6} py={20} textAlign="center">
+                      <Box>
+                        <Text fontSize="6xl" mb={4}>✨</Text>
+                        <Heading size="md" color="gray.500" mb={2}>
+                          생성된 콘텐츠가 여기에 표시됩니다
+                        </Heading>
+                        <Text color="gray.400">
+                          왼쪽 폼을 작성하고 "생성하기" 버튼을 클릭해 AI 콘텐츠를 만들어보세요
+                        </Text>
+                      </Box>
+                    </VStack>
+                  )}
+
+                  {/* Content Display Section */}
+                  {generatedContent && (
                     <VStack spacing={6} align="stretch">
                       <Box>
                         <HStack justify="space-between" mb={4}>
@@ -189,7 +336,7 @@ export default function CreateContentPage() {
 
                       <Divider />
 
-                      <Box>
+                      <Box position="relative">
                         <Textarea
                           value={generatedContent.content}
                           readOnly
@@ -197,45 +344,27 @@ export default function CreateContentPage() {
                           resize="vertical"
                           bg="gray.50"
                           _focus={{ bg: 'gray.50' }}
+                          pr="50px"
                         />
+                        <Button
+                          position="absolute"
+                          top="8px"
+                          right="8px"
+                          size="sm"
+                          variant="ghost"
+                          colorScheme="blue"
+                          onClick={handleCopyContent}
+                          isLoading={isCopying}
+                          leftIcon={<Copy size={14} />}
+                        >
+                          복사
+                        </Button>
                       </Box>
 
                       <Divider />
 
-                      <VStack spacing={3}>
-                        <Button
-                          colorScheme="brand"
-                          size="lg"
-                          width="100%"
-                          onClick={handleSaveContent}
-                          isLoading={isSaving}
-                          loadingText="저장 중..."
-                        >
-                          콘텐츠 저장
-                        </Button>
-                        
-                        <HStack spacing={3} width="100%">
-                          <Button
-                            variant="outline"
-                            size="md"
-                            flex={1}
-                            onClick={handleScheduleContent}
-                          >
-                            스케줄 설정
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="md"
-                            flex={1}
-                            onClick={() => setGeneratedContent(null)}
-                          >
-                            새로 생성
-                          </Button>
-                        </HStack>
-                      </VStack>
-
                       {generatedContent.metadata && (
-                        <Box pt={4} fontSize="sm" color="gray.600">
+                        <Box fontSize="sm" color="gray.600">
                           {generatedContent.metadata.targetAudience && (
                             <Text>타겟 오디언스: {generatedContent.metadata.targetAudience}</Text>
                           )}
@@ -245,20 +374,129 @@ export default function CreateContentPage() {
                           <Text>길이: {generatedContent.metadata.length}</Text>
                         </Box>
                       )}
-                    </VStack>
-                  ) : (
-                    <VStack spacing={6} py={20} textAlign="center">
-                      <Box>
-                        <Text fontSize="6xl" mb={4}>✨</Text>
-                        <Heading size="md" color="gray.500" mb={2}>
-                          생성된 콘텐츠가 여기에 표시됩니다
-                        </Heading>
-                        <Text color="gray.400">
-                          왼쪽 폼을 작성하고 "생성하기" 버튼을 클릭해 AI 콘텐츠를 만들어보세요
-                        </Text>
-                      </Box>
+
+                      {/* Evaluation Results Display */}
+                      {evaluation && (
+                        <Box p={4} bg="purple.50" borderRadius="md" border="1px solid" borderColor="purple.200">
+                          <Heading size="sm" mb={3} color="purple.700">
+                            🤖 AI 평가 결과
+                          </Heading>
+                          
+                          <Flex align="center" mb={3}>
+                            <Text fontSize="sm" fontWeight="semibold" color="purple.700" mr={2}>
+                              종합 점수:
+                            </Text>
+                            <HStack spacing={1}>
+                              {renderRatingStars(evaluation.rating)}
+                              <Text fontSize="sm" fontWeight="bold" color="purple.700" ml={2}>
+                                {evaluation.rating.toFixed(1)}/5
+                              </Text>
+                            </HStack>
+                          </Flex>
+
+                          {evaluation.feedback && (
+                            <Box mb={3}>
+                              <Text fontSize="sm" fontWeight="semibold" color="purple.700" mb={1}>
+                                피드백:
+                              </Text>
+                              <Text fontSize="sm" color="gray.700" bg="white" p={2} borderRadius="md">
+                                {evaluation.feedback}
+                              </Text>
+                            </Box>
+                          )}
+
+                          {evaluation.criteria && (
+                            <Box>
+                              <Text fontSize="sm" fontWeight="semibold" color="purple.700" mb={2}>
+                                세부 평가:
+                              </Text>
+                              <VStack spacing={2} align="stretch">
+                                {Object.entries(evaluation.criteria).map(([key, value]) => (
+                                  <Flex key={key} align="center" fontSize="sm">
+                                    <Text color="gray.600" minW="80px" mr={2}>
+                                      {key === 'relevance' ? '관련성' :
+                                       key === 'quality' ? '품질' :
+                                       key === 'engagement' ? '참여도' :
+                                       key === 'creativity' ? '창의성' :
+                                       key === 'clarity' ? '명확성' :
+                                       key === 'tone_accuracy' ? '톤 정확성' : key}:
+                                    </Text>
+                                    <Progress 
+                                      value={(value as number) * 20} 
+                                      size="sm" 
+                                      colorScheme="purple" 
+                                      flex={1} 
+                                      mr={2}
+                                      bg="white"
+                                    />
+                                    <Text color="purple.700" minW="30px" fontWeight="medium">
+                                      {value}/5
+                                    </Text>
+                                  </Flex>
+                                ))}
+                              </VStack>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                     </VStack>
                   )}
+
+                  {/* Action Buttons - Always Visible */}
+                  <VStack spacing={3} mt={6}>
+                    {/* Save/Evaluate Button Split */}
+                    <HStack spacing={2} width="100%">
+                      <Button
+                        colorScheme="brand"
+                        size="lg"
+                        flex={1}
+                        onClick={handleSaveContent}
+                        isLoading={isSaving}
+                        loadingText="저장 중..."
+                        isDisabled={!generatedContent}
+                      >
+                        콘텐츠 저장
+                      </Button>
+                      <Button
+                        colorScheme="purple"
+                        size="lg"
+                        flex={1}
+                        onClick={handleEvaluateContent}
+                        isLoading={isEvaluating}
+                        loadingText="평가 중..."
+                        isDisabled={!generatedContent}
+                      >
+                        콘텐츠 평가
+                      </Button>
+                    </HStack>
+                    
+                    <HStack spacing={3} width="100%">
+                      <Button
+                        variant="outline"
+                        size="md"
+                        flex={1}
+                        onClick={handleCopyContent}
+                        isLoading={isCopying}
+                        loadingText="복사 중..."
+                        isDisabled={!generatedContent}
+                        leftIcon={<Copy size={16} />}
+                      >
+                        콘텐츠 복사
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="md"
+                        flex={1}
+                        onClick={() => {
+                          setGeneratedContent(null)
+                          setEvaluation(null)
+                        }}
+                        isDisabled={!generatedContent}
+                      >
+                        새로 생성
+                      </Button>
+                    </HStack>
+                  </VStack>
                 </CardBody>
               </Card>
             </Box>

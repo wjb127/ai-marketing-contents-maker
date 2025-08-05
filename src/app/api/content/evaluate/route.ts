@@ -34,10 +34,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // 이미 평가되었는지 확인 (JSON에서)
+    let alreadyEvaluated = false
+    if (content.additional_instructions) {
+      try {
+        const parsed = JSON.parse(content.additional_instructions)
+        alreadyEvaluated = !!parsed.ai_evaluation
+      } catch (e) {
+        // JSON 파싱 실패시 새로 평가
+      }
+    }
+
     // 평가 수행 및 저장
     const evaluation = await evaluateAndSaveContent(content_id)
-    
-    const alreadyEvaluated = content.ai_rating && content.evaluated_at
     
     return NextResponse.json({
       rating: evaluation.rating,

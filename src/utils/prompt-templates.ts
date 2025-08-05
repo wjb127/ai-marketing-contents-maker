@@ -4,19 +4,29 @@ import { CONTENT_TYPE_SPECS } from '@/utils/constants'
 // 훅 타입 정의
 type HookType = 'strong_recommend' | 'warning' | 'practical'
 
-// 강조 표현 풀
-const EMPHASIS_EXPRESSIONS = [
-  '외우세요',
-  '기억하세요',
-  '꼭 명심하세요',
-  '무조건 ~하세요',
-  '반드시 ~해야 합니다',
-  '절대 ~하지 마세요',
-  '이건 진짜 금물',
-  '놓치면 후회합니다',
-  '이것만 알아도 성공',
-  '핵심 중의 핵심',
-]
+// 강조 표현 풀 (톤별 구분)
+const EMPHASIS_EXPRESSIONS = {
+  professional: [
+    '중요한 사실은',
+    '주목해야 할 점은',
+    '핵심 요소는',
+    '결정적 차이는',
+    '가장 효과적인 방법은',
+    '검증된 접근법은',
+    '업계 표준은',
+    '실제 데이터에 따르면',
+  ],
+  casual: [
+    '외우세요',
+    '기억하세요',
+    '꼭 명심하세요',
+    '무조건 ~하세요',
+    '절대 ~하지 마세요',
+    '이건 진짜 금물',
+    '놓치면 후회합니다',
+    '이것만 알아도 성공',
+  ]
+}
 
 // 경험담 어투 풀
 const EXPERIENCE_TONES = [
@@ -43,9 +53,9 @@ const CLOSING_EXPRESSIONS = [
 // 톤별 상세 설정
 const TONE_DETAILS = {
   professional: {
-    title: '전문가 멘토형',
-    description: '권위 있되 친근한',
-    opening: '제가 {experience}년간 {field}에서 배운 것은',
+    title: '전문가 분석형',
+    description: '객관적이고 체계적인 전문성',
+    opening: '업계 {experience}년 경험에 따르면',
     style: '~습니다체',
   },
   casual: {
@@ -96,77 +106,116 @@ export function getImprovedPromptTemplate(
   switch (contentType) {
     case 'thread':
       const randomHookType = getRandomElement(['strong_recommend', 'warning', 'practical'])
-      const randomEmphasis = getRandomElements(EMPHASIS_EXPRESSIONS, 3)
-      const randomExperience = getRandomElements(EXPERIENCE_TONES, 2)
+      const emphasisPool = EMPHASIS_EXPRESSIONS[tone] || EMPHASIS_EXPRESSIONS.casual
+      const randomEmphasis = getRandomElements(emphasisPool, 2)
+      const randomExperience = getRandomElements(EXPERIENCE_TONES, 1)
       const randomClosing = getRandomElement(CLOSING_EXPRESSIONS)
+      
+      // 톤별 구체적 작성 지침
+      const toneSpecificGuidance = tone === 'professional' ? `
+[Professional 톤 특별 지침]
+- 개인 경험담보다는 객관적 사실과 업계 동향 중심
+- "저는~", "제가~" 대신 "일반적으로", "현실적으로", "업계에서는" 사용
+- 구체적 수치, 사례, 도구명으로 전문성 강조
+- 감정적 표현보다는 논리적이고 체계적인 설명
+- 각 팁마다 '왜 그런지' 이유와 배경 설명 포함` : ''
       
       basePrompt = `다음 조건에 맞춰 X(트위터) 스레드를 작성해주세요:
 
 주제: ${topic}
 ${targetAudience ? `타겟: ${targetAudience}` : ''}
 
-[구조]
-1. 훅 (다음 유형 사용):
-   ${randomHookType === 'strong_recommend' ? `- 강력추천형: "${topic} 무조건 알아야 하는 ${Math.floor(Math.random() * 5) + 3}가지"` : ''}
-   ${randomHookType === 'warning' ? `- 경고형: "${topic} 이렇게 하면 망합니다" 또는 "하지 마세요"` : ''}
-   ${randomHookType === 'practical' ? `- 실용형: "당신의 소중한 시간/돈을 아껴줄 ${topic} 꿀팁"` : ''}
+[제목과 내용 일관성 확보]
+${randomHookType === 'strong_recommend' ? `- 제목: "${topic} 무조건 알아야 하는 ${Math.floor(Math.random() * 3) + 3}가지"
+- 내용: 제목에서 약속한 정확한 개수만큼 구체적 방법론 제시` : ''}
+${randomHookType === 'warning' ? `- 제목: "${topic} 이렇게 하면 망합니다" 
+- 내용: 실제 실패 사례와 구체적 해결책 함께 제시` : ''}
+${randomHookType === 'practical' ? `- 제목: "${topic} 10배 쉽게 하는 방법"
+- 내용: 기존 방법 대비 확실히 효율적인 구체적 방법론` : ''}
 
-2. 본문 (2-6번 트윗):
-   - 구체적 항목 ${length === 'short' ? '3-4개' : length === 'medium' ? '5-6개' : '7-8개'} 나열
-   - 실제 수치/도구명/브랜드명 포함으로 신뢰도 확보
-   - 강조 표현 활용: "${randomEmphasis.join('", "')}" 중 자연스럽게 선택
-   - 경험담 어투: "${randomExperience.join('", "')}" 등 활용
-   - 각 트윗은 독립적으로도 가치 있게
+[체계적 구조화]
+1. 훅: 제목과 완전히 일치하는 오프닝
+2. 본문: ${length === 'short' ? '3-4개' : length === 'medium' ? '5-6개' : '7-8개'} 항목을 논리적 순서로 배치
+   - 각 항목마다 구체적 예시 + 적용 방법 + 예상 결과
+   - 실제 도구명/브랜드명/수치 포함으로 실용성 확보
+   - 항목 간 연결성과 흐름 고려
+3. 마무리: 실행 가능한 첫 단계 제안
 
-3. 마무리 트윗:
-   ${randomClosing.type === 'emotional' ? `- 감정적 공감: "${randomClosing.text}" ${randomClosing.emoji}` : ''}
-   ${randomClosing.type === 'perspective' ? `- 큰 그림 제시: "${randomClosing.text}"` : ''}
-   ${randomClosing.type === 'summary' ? `- 결과 요약: "${randomClosing.text}"` : ''}
-   - "더 많은 인사이트는 팔로우해주세요" 자연스럽게 유도
+${toneSpecificGuidance}
 
-톤: ${toneDetail.description} / ${toneDetail.style} 사용
+[내용 깊이 강화]
+- 각 팁마다 최소 2-3문장으로 충분한 설명
+- "왜 효과적인지" 원리나 이유 설명 포함
+- 바로 적용할 수 있는 구체적 액션 아이템
+- 일반론 대신 특정 상황별 구체적 가이드
+
+톤: ${toneDetail.description} / ${toneDetail.style} 일관성 유지
 각 트윗 280자 이내, 전체 ${length === 'short' ? '5개' : length === 'medium' ? '6-7개' : '8-10개'} 트윗
 
 ❌ 절대 금지사항 (AI 티 완전 제거):
-- 마크다운 문법 사용 금지: **굵게**, *기울임*, # 제목, - 불릿 등
-- "1번 트윗", "2번 트윗" 같은 구조적 번호 매기기 금지
-- 체크마크(✓) 절대 사용 금지
-- "핵심은", "포인트는", "중요한 것은" AI 어투 금지
-- 완벽한 구조 대신 자연스럽게 흘러가는 대화체로
-- 트윗마다 구분선이나 번호 없이 자연스럽게 연결
-- 실제 사람이 연속으로 트윗하는 것처럼 작성`
+- 마크다운 문법 및 구조적 표현 금지
+- 번호 매기기 대신 자연스러운 순서 표현 ("먼저", "그 다음", "마지막으로")
+- 체크마크(✓), 불릿(-) 완전 금지
+- AI 어투 ("핵심은", "포인트는", "요약하면") 금지
+- 완벽한 문법보다 자연스러운 구어체
+- 실제 사람이 연속 트윗하듯 자연스럽게 연결`
       break
       
     case 'x_post':
       const postHookType = getRandomElement(['strong_recommend', 'warning', 'practical'])
-      const postEmphasis = getRandomElement(EMPHASIS_EXPRESSIONS)
+      const postEmphasisPool = EMPHASIS_EXPRESSIONS[tone] || EMPHASIS_EXPRESSIONS.casual
+      const postEmphasis = getRandomElement(postEmphasisPool)
+      
+      // 톤별 구체적 작성 지침
+      const postToneGuidance = tone === 'professional' ? `
+[Professional 톤 지침]
+- 업계 표준이나 통계 데이터 활용
+- 전문 용어는 간단한 설명과 함께
+- 객관적 근거 기반으로 신뢰성 확보
+- 개인 의견보다는 검증된 사실 중심` : ''
       
       basePrompt = `다음 조건으로 X(트위터) 게시물을 작성해주세요:
 
 주제: ${topic}
 ${targetAudience ? `타겟: ${targetAudience}` : ''}
 
-[훅 선택]
-${postHookType === 'strong_recommend' ? `"${topic} 하는 사람이 꼭 알아야 할 팩트"` : ''}
-${postHookType === 'warning' ? `"${topic} 실패하는 사람들의 공통점"` : ''}
-${postHookType === 'practical' ? `"${topic} 10배 쉽게 하는 방법"` : ''}
+[제목-내용 일관성 보장]
+${postHookType === 'strong_recommend' ? `훅: "${topic} 하는 사람이 꼭 알아야 할 팩트"
+→ 내용: 정말 중요하고 검증된 핵심 사실들만` : ''}
+${postHookType === 'warning' ? `훅: "${topic} 실패하는 사람들의 공통점"
+→ 내용: 실제 실패 사례 기반 구체적 주의사항` : ''}
+${postHookType === 'practical' ? `훅: "${topic} 10배 쉽게 하는 방법"
+→ 내용: 기존 방식 대비 명확히 효율적인 방법` : ''}
 
-[본문 작성법]
-- 핵심 내용 3개 자연스럽게 나열 (번호나 불릿 금지)
-- 구체적 숫자나 사례 포함으로 신뢰도 확보
-- "${postEmphasis}" 같은 임팩트 표현 한 번만 사용
-- 마지막에 개인적이고 구체적인 질문
+[체계적 내용 구성]
+- 핵심 포인트 3개를 논리적 순서로 배치
+- 각 포인트마다 구체적 예시나 수치 포함
+- 포인트 간 연결성 있게 구성
+- 실행 가능한 구체적 조언
 
-AI 티 완전 제거:
-- 체크마크(✓), 별표(**), 구조적 표현 사용 금지
-- "포인트는", "핵심은" 같은 AI 어투 금지
-- 실제 사람이 쓴 것처럼 자연스럽게
-- 완벽한 문법보다 구어체 느낌
+${postToneGuidance}
 
-톤: ${toneDetail.description}
+[깊이 있는 설명]
+- 각 포인트를 단순 나열이 아닌 설명과 함께
+- "왜 중요한지" 이유 포함
+- 바로 적용 가능한 실용적 팁
+- 일반론 대신 구체적 상황별 가이드
+
+[자연스러운 마무리]
+- 독자 참여 유도하는 구체적 질문
+- 경험 공유나 의견 요청
+- 억지스럽지 않게 자연스럽게
+
+톤: ${toneDetail.description} 일관성 유지
 길이: 280자 이내
 
-${includeHashtags ? '해시태그: 자연스럽게 2-3개 포함' : ''}`
+❌ AI 티 완전 제거:
+- 구조적 표현 (✓, -, **, 번호) 절대 금지
+- "포인트는", "핵심은", "정리하면" AI 어투 금지
+- 자연스러운 흐름과 구어체 느낌
+- 완벽한 문법보다 진짜 사람이 쓴 느낌
+
+${includeHashtags ? '해시태그: 콘텐츠와 자연스럽게 연결되는 2-3개' : ''}`
       break
       
     case 'blog_post':
