@@ -293,7 +293,7 @@ export default function CreateContentPage() {
                 <CardBody>
                   {isGenerating ? (
                     <LoadingSpinner text="Generating your content..." />
-                  ) : (
+                  ) : !generatedContent ? (
                     <VStack spacing={6} py={20} textAlign="center">
                       <Box>
                         <Text fontSize="6xl" mb={4}>✨</Text>
@@ -305,7 +305,7 @@ export default function CreateContentPage() {
                         </Text>
                       </Box>
                     </VStack>
-                  )}
+                  ) : null}
 
                   {/* Content Display Section */}
                   {generatedContent && (
