@@ -117,7 +117,7 @@ export async function saveEvaluationToDatabase(
   contentId: string, 
   evaluation: EvaluationResult
 ): Promise<void> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { error } = await supabase
     .from('contents')
@@ -137,7 +137,7 @@ export async function saveEvaluationToDatabase(
 }
 
 export async function evaluateAndSaveContent(contentId: string): Promise<EvaluationResult> {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   // 콘텐츠 조회
   const { data: content, error: contentError } = await supabase

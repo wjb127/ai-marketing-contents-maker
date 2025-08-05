@@ -18,7 +18,7 @@ async function handler(request: NextRequest) {
       )
     }
 
-    const supabase = createClient()
+    const supabase = await createClient()
 
     // 스케줄 정보 조회
     const { data: schedule, error: scheduleError } = await supabase
@@ -184,7 +184,7 @@ async function handler(request: NextRequest) {
     
     // 실패 로그를 데이터베이스에 기록 (옵션)
     try {
-      const supabase = createClient()
+      const supabase = await createClient()
       await supabase
         .from('schedules')
         .update({ 

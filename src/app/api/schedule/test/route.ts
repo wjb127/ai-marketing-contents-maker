@@ -5,7 +5,7 @@ import { scheduleContentGeneration } from '@/lib/qstash'
 // 테스트용 엔드포인트 - 1분 후 실행되는 샘플 스케줄 생성
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // DOGFOODING MODE: Skip auth check
     const user = { id: '00000000-0000-0000-0000-000000000001' }

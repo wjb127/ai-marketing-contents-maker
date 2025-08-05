@@ -5,7 +5,7 @@ import { evaluateAndSaveContent } from '@/lib/evaluation'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // DOGFOODING MODE: Skip auth check
     const user = { id: '00000000-0000-0000-0000-000000000001' }
