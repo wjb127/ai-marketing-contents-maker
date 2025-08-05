@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         const prompt = `Generate ${schedule.content_type} content about "${schedule.topic}" in ${schedule.content_tone} tone.`
         
         const message = await anthropic.messages.create({
-          model: 'claude-3-sonnet-20240229',
+          model: 'claude-sonnet-4-20250514',
           max_tokens: 2000,
           messages: [{ role: 'user', content: prompt }]
         })
