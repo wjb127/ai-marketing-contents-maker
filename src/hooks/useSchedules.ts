@@ -94,22 +94,31 @@ export function useSchedules() {
   }
 
   const updateSchedule = async (scheduleId: string, updates: Partial<Schedule>) => {
-    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
+    if (!user) throw new Error('User not authenticated')
 
     try {
-      const { data, error } = await supabase
-        .from('schedules')
-        .update(updates)
-        .eq('id', scheduleId)
-        .eq('user_id', user.id)
-        .select()
-        .single()
+      console.log('Updating schedule via API:', { scheduleId, updates })
+      
+      // API를 통해 스케줄 업데이트 (QStash 재스케줄링 포함)
+      const response = await fetch('/api/schedule/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: scheduleId, ...updates }),
+      })
 
-      if (error) {
-        console.error('Error updating schedule:', error)
-        throw error
+      console.log('Schedule update response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+        console.error('Schedule update failed:', errorData)
+        throw new Error(errorData.error || `Failed to update schedule (${response.status})`)
       }
 
+      const data = await response.json()
+      console.log('Schedule updated successfully:', data)
+      
       setSchedules(prev => 
         prev.map(schedule => 
           schedule.id === scheduleId ? { ...schedule, ...data } : schedule
@@ -124,20 +133,25 @@ export function useSchedules() {
   }
 
   const deleteSchedule = async (scheduleId: string) => {
-    if (!user || !supabase) throw new Error('User not authenticated or Supabase not initialized')
+    if (!user) throw new Error('User not authenticated')
 
     try {
-      const { error } = await supabase
-        .from('schedules')
-        .delete()
-        .eq('id', scheduleId)
-        .eq('user_id', user.id)
+      console.log('Deleting schedule via API:', scheduleId)
+      
+      // API를 통해 스케줄 삭제 (QStash 취소 포함)
+      const response = await fetch(`/api/schedule/delete?id=${scheduleId}`, {
+        method: 'DELETE',
+      })
 
-      if (error) {
-        console.error('Error deleting schedule:', error)
-        throw error
+      console.log('Schedule delete response status:', response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+        console.error('Schedule delete failed:', errorData)
+        throw new Error(errorData.error || `Failed to delete schedule (${response.status})`)
       }
 
+      console.log('Schedule deleted successfully:', scheduleId)
       setSchedules(prev => prev.filter(schedule => schedule.id !== scheduleId))
     } catch (error: any) {
       console.error('Error deleting schedule:', error)
