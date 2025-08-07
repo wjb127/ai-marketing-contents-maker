@@ -11,7 +11,11 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <Box minH="100vh" bg="gray.50">
       <Navbar />
-      <Container maxW="7xl" py={8}>
+      <Container 
+        maxW="7xl" 
+        py={{ base: 4, md: 8 }}
+        px={{ base: 4, md: 6 }}
+        w="full">
         {children}
       </Container>
     </Box>

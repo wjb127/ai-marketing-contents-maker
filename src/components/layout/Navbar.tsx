@@ -58,13 +58,18 @@ export default function Navbar() {
       <Flex
         bg={useColorModeValue('white', 'gray.800')}
         color={useColorModeValue('gray.600', 'white')}
-        minH={'60px'}
-        py={{ base: 2 }}
-        px={{ base: 4 }}
+        minH={{ base: '56px', md: '60px' }}
+        py={{ base: 2, md: 3 }}
+        px={{ base: 4, md: 6 }}
         borderBottom={1}
         borderStyle={'solid'}
         borderColor={useColorModeValue('gray.200', 'gray.900')}
-        align={'center'}>
+        align={'center'}
+        position="sticky"
+        top={0}
+        zIndex={1000}
+        backdropFilter="blur(10px)"
+        boxShadow="sm">
         <Flex
           flex={{ base: 1, md: 'auto' }}
           ml={{ base: -2 }}
@@ -76,6 +81,12 @@ export default function Navbar() {
             }
             variant={'ghost'}
             aria-label={'Toggle Navigation'}
+            size="lg"
+            minH="48px"
+            minW="48px"
+            borderRadius="md"
+            _hover={{ bg: useColorModeValue('gray.100', 'gray.700') }}
+            _active={{ bg: useColorModeValue('gray.200', 'gray.600') }}
           />
         </Flex>
         <Flex flex={{ base: 1 }} justify={{ base: 'center', md: 'start' }}>
@@ -83,8 +94,10 @@ export default function Navbar() {
             textAlign={{ base: 'center', md: 'left' }}
             fontFamily={'heading'}
             color={useColorModeValue('gray.800', 'white')}
-            fontSize={'xl'}
-            fontWeight={'bold'}>
+            fontSize={{ base: 'lg', md: 'xl' }}
+            fontWeight={'bold'}
+            py={2}
+            noOfLines={1}>
             AI SNS Maker
           </Text>
 
@@ -236,8 +249,13 @@ const MobileNav = () => {
   return (
     <Stack
       bg={useColorModeValue('white', 'gray.800')}
-      p={4}
-      display={{ md: 'none' }}>
+      p={{ base: 4, sm: 6 }}
+      display={{ md: 'none' }}
+      spacing={2}
+      borderBottom={1}
+      borderStyle={'solid'}
+      borderColor={useColorModeValue('gray.200', 'gray.700')}
+      boxShadow="md">
       {NAV_ITEMS.map((navItem) => (
         <MobileNavItem key={navItem.label} {...navItem} />
       ))}
@@ -249,59 +267,100 @@ const MobileNavItem = ({ label, children, href }: NavItem) => {
   const { isOpen, onToggle } = useDisclosure()
 
   return (
-    <Stack spacing={4} onClick={children && onToggle}>
+    <Stack spacing={3} onClick={children && onToggle}>
       {href ? (
         <NextLink href={href}>
           <Box
-            py={2}
+            py={3}
+            px={2}
+            borderRadius="md"
+            minH="48px"
+            display="flex"
             justifyContent="space-between"
             alignItems="center"
             _hover={{
               textDecoration: 'none',
-            }}>
+              bg: useColorModeValue('gray.50', 'gray.700')
+            }}
+            _active={{
+              bg: useColorModeValue('gray.100', 'gray.600')
+            }}
+            transition="all 0.2s">
             <Text
               fontWeight={600}
-              color={useColorModeValue('gray.600', 'gray.200')}>
+              fontSize="md"
+              color={useColorModeValue('gray.700', 'gray.200')}>
               {label}
             </Text>
           </Box>
         </NextLink>
       ) : (
-        <Box
-          py={2}
+        <Flex
+          py={3}
+          px={2}
+          borderRadius="md"
+          minH="48px"
           justifyContent="space-between"
           alignItems="center"
-          cursor="pointer">
+          cursor="pointer"
+          _hover={{
+            bg: useColorModeValue('gray.50', 'gray.700')
+          }}
+          _active={{
+            bg: useColorModeValue('gray.100', 'gray.600')
+          }}
+          transition="all 0.2s">
           <Text
             fontWeight={600}
-            color={useColorModeValue('gray.600', 'gray.200')}>
+            fontSize="md"
+            color={useColorModeValue('gray.700', 'gray.200')}>
             {label}
           </Text>
-        </Box>
-      )}
-      {children && (
-        <Icon
-          as={ChevronDownIcon}
-          transition={'all .25s ease-in-out'}
-          transform={isOpen ? 'rotate(180deg)' : ''}
-          w={6}
-          h={6}
-        />
+          {children && (
+            <Icon
+              as={ChevronDownIcon}
+              transition={'all .25s ease-in-out'}
+              transform={isOpen ? 'rotate(180deg)' : ''}
+              w={5}
+              h={5}
+              color={useColorModeValue('gray.500', 'gray.400')}
+            />
+          )}
+        </Flex>
       )}
 
       <Collapse in={isOpen} animateOpacity style={{ marginTop: '0!important' }}>
         <Stack
           mt={2}
           pl={4}
-          borderLeft={1}
+          borderLeft={2}
           borderStyle={'solid'}
-          borderColor={useColorModeValue('gray.200', 'gray.700')}
-          align={'start'}>
+          borderColor={useColorModeValue('brand.200', 'brand.600')}
+          spacing={1}>
           {children &&
             children.map((child) => (
               <NextLink key={child.label} href={child.href || '#'}>
-                <Box py={2}>
-                  {child.label}
+                <Box 
+                  py={3}
+                  px={3}
+                  borderRadius="md"
+                  minH="44px"
+                  display="flex"
+                  alignItems="center"
+                  _hover={{
+                    bg: useColorModeValue('brand.50', 'brand.900'),
+                    textDecoration: 'none'
+                  }}
+                  _active={{
+                    bg: useColorModeValue('brand.100', 'brand.800')
+                  }}
+                  transition="all 0.2s">
+                  <Text 
+                    fontSize="sm" 
+                    fontWeight={500}
+                    color={useColorModeValue('gray.600', 'gray.300')}>
+                    {child.label}
+                  </Text>
                 </Box>
               </NextLink>
             ))}
