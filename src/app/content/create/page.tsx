@@ -17,8 +17,11 @@ import {
   Progress,
   Flex,
   Spacer,
+  Collapse,
+  useBreakpointValue,
+  IconButton,
 } from '@chakra-ui/react'
-import { Star, TrendingUp, Copy } from 'lucide-react'
+import { Star, TrendingUp, Copy, ChevronUp, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import Layout from '@/components/layout/Layout'
 import ContentForm, { ContentFormData } from '@/components/content/ContentForm'
@@ -65,6 +68,8 @@ export default function CreateContentPage() {
   const [isEvaluating, setIsEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null)
   const [isCopying, setIsCopying] = useState(false)
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false)
+  const isMobile = useBreakpointValue({ base: true, lg: false })
 
   const handleGenerateContent = async (data: ContentFormData) => {
     setIsGenerating(true)
@@ -77,7 +82,10 @@ export default function CreateContentPage() {
         tone: data.tone,
         topic: data.topic,
         target_audience: data.targetAudience,
-        additional_instructions: data.additionalNotes
+        additional_instructions: data.additionalNotes,
+        creativityLevel: data.creativityLevel,
+        temperature: data.temperature,
+        top_p: data.top_p
       })
       
       const formattedResult = {
@@ -96,6 +104,11 @@ export default function CreateContentPage() {
       }
       
       setGeneratedContent(formattedResult)
+      
+      // 모바일에서 콘텐츠 생성 시 폼 자동 접기
+      if (isMobile) {
+        setIsFormCollapsed(true)
+      }
       
       toast({
         title: '콘텐츠 생성 완료!',
@@ -284,7 +297,45 @@ export default function CreateContentPage() {
           <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={8}>
             {/* Content Form */}
             <Box>
-              <ContentForm onSubmit={handleGenerateContent} />
+              <Card>
+                <CardBody p={0}>
+                  {/* 모바일에서만 표시되는 헤더 */}
+                  {isMobile && (
+                    <Flex
+                      align="center"
+                      justify="space-between"
+                      p={4}
+                      borderBottom="1px solid"
+                      borderColor="gray.200"
+                      bg="gray.50"
+                      cursor="pointer"
+                      onClick={() => setIsFormCollapsed(!isFormCollapsed)}
+                    >
+                      <Box>
+                        <Heading size="sm" color="gray.800">새 콘텐츠 생성</Heading>
+                        <Text fontSize="xs" color="gray.600">
+                          다양한 플랫폼과 형식에 맞는 AI 콘텐츠를 만들어보세요
+                        </Text>
+                      </Box>
+                      <IconButton
+                        aria-label={isFormCollapsed ? "폼 열기" : "폼 닫기"}
+                        icon={isFormCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                        size="sm"
+                        variant="ghost"
+                      />
+                    </Flex>
+                  )}
+                  
+                  {/* 폼 콘텐츠 */}
+                  <Box display={!isMobile ? "block" : undefined}>
+                    <Collapse in={!isMobile || !isFormCollapsed} animateOpacity>
+                      <Box p={!isMobile ? 0 : 0}>
+                        <ContentForm onSubmit={handleGenerateContent} />
+                      </Box>
+                    </Collapse>
+                  </Box>
+                </CardBody>
+              </Card>
             </Box>
 
             {/* Generated Content Display */}

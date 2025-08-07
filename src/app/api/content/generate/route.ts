@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { ContentType, ContentTone } from '@/types'
-import { CONTENT_TYPE_SPECS } from '@/utils/constants'
-import { getImprovedPromptTemplate } from '@/utils/prompt-templates'
+import { CONTENT_TYPE_SPECS, CREATIVITY_LEVELS } from '@/utils/constants'
+import { getDatabasePromptTemplate, logPromptUsage } from '@/utils/db-prompt-templates'
 import { evaluateAndSaveContent } from '@/lib/evaluation'
 
 export async function POST(request: NextRequest) {
@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
       topic, 
       tone, 
       target_audience,
-      additional_instructions
+      additional_instructions,
+      creativityLevel = 'balanced',
+      temperature,
+      top_p
     } = await request.json()
 
     if (!topic || !type || !tone) {
@@ -31,19 +34,31 @@ export async function POST(request: NextRequest) {
     // DOGFOODING MODE: Skip subscription checks
     const monthlyCount = 0
 
-    const prompt = getImprovedPromptTemplate(
+    // 데이터베이스에서 프롬프트 템플릿 가져오기
+    const startTime = Date.now()
+    const prompt = await getDatabasePromptTemplate(
       type,
       tone,
       topic,
-      'medium', // default length
       target_audience,
-      true, // include hashtags by default
       additional_instructions
     )
+    const promptFetchTime = Date.now() - startTime
 
+    // 창의성 파라미터 설정
+    const creativitySettings = temperature && top_p ? {
+      temperature,
+      top_p
+    } : CREATIVITY_LEVELS[creativityLevel as keyof typeof CREATIVITY_LEVELS] || CREATIVITY_LEVELS.balanced
+
+    console.log('🤖 Generating content with database prompt template')
+    const generateStartTime = Date.now()
+    
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
+      temperature: creativitySettings.temperature,
+      top_p: creativitySettings.top_p,
       messages: [
         {
           role: 'user',
@@ -52,7 +67,10 @@ export async function POST(request: NextRequest) {
       ]
     })
 
+    const generateTime = Date.now() - generateStartTime
     const generatedContent = message.content[0]?.type === 'text' ? message.content[0].text : ''
+    
+    console.log('✅ Content generated successfully using database prompt')
     
     // Save content to database
     const { data: contentData, error: contentError } = await supabase

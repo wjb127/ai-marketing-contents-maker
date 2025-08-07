@@ -28,7 +28,8 @@ import {
   TONES, 
   TONE_LABELS, 
   CONTENT_LENGTHS,
-  CONTENT_TYPE_SPECS 
+  CONTENT_TYPE_SPECS,
+  CREATIVITY_LEVELS 
 } from '@/utils/constants'
 
 interface ContentFormProps {
@@ -43,6 +44,9 @@ export interface ContentFormData {
   additionalNotes: string
   targetAudience: string
   includeHashtags: boolean
+  creativityLevel?: string
+  temperature?: number
+  top_p?: number
 }
 
 export default function ContentForm({ onSubmit }: ContentFormProps) {
@@ -54,6 +58,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     additionalNotes: '',
     targetAudience: '',
     includeHashtags: true,
+    creativityLevel: 'balanced',
   })
   const [isLoading, setIsLoading] = useState(false)
   const toast = useToast()
@@ -198,6 +203,21 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
                 rows={3}
               />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>🎨 창의성 레벨</FormLabel>
+              <Select
+                value={formData.creativityLevel}
+                onChange={(e) => handleInputChange('creativityLevel', e.target.value)}
+              >
+                {Object.entries(CREATIVITY_LEVELS).map(([key, value]) => (
+                  <option key={key} value={key}>{value.label}</option>
+                ))}
+              </Select>
+              <FormHelperText>
+                {CREATIVITY_LEVELS[formData.creativityLevel as keyof typeof CREATIVITY_LEVELS]?.description}
+              </FormHelperText>
             </FormControl>
 
             <Button

@@ -5,6 +5,7 @@ import { anthropic } from '@/lib/claude'
 import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
 import { getScheduledPromptTemplate } from '@/utils/prompt-templates'
 import { evaluateAndSaveContent } from '@/lib/evaluation'
+import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 async function handler(request: NextRequest) {
   try {
@@ -104,9 +105,16 @@ async function handler(request: NextRequest) {
       )
     }
 
+    // 창의성 설정 가져오기
+    const creativitySettings = schedule.creativity_level 
+      ? CREATIVITY_LEVELS[schedule.creativity_level as keyof typeof CREATIVITY_LEVELS]
+      : CREATIVITY_LEVELS.balanced
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
+      temperature: creativitySettings.temperature,
+      top_p: creativitySettings.top_p,
       messages: [
         {
           role: 'user',
@@ -119,7 +127,7 @@ async function handler(request: NextRequest) {
       ? message.content[0].text 
       : ''
 
-    // 콘텐츠 저장
+    // 콘텐츠 저장 (dogfooding 환경에 맞게 수정)
     const { data: savedContent, error: contentError } = await supabase
       .from('contents')
       .insert({
@@ -130,8 +138,8 @@ async function handler(request: NextRequest) {
         topic: schedule.topics?.[0] || '',
         content: generatedContent,
         status: 'draft',
-        schedule_id: scheduleId,
-        auto_generated: true
+        schedule_id: scheduleId
+        // auto_generated 필드 제거 (dogfooding 스키마에 없음)
       })
       .select()
       .single()

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
-import { getScheduledPromptTemplate } from '@/utils/prompt-templates'
+import { getDatabasePromptTemplate, logPromptUsage } from '@/utils/db-prompt-templates'
 import { calculateNextRun, scheduleContentGeneration } from '@/lib/qstash'
+import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 // 스케줄 즉시 실행 (테스트용)
 export async function POST(request: NextRequest) {
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
 
     // AI로 콘텐츠 생성
     let prompt
+    const startTime = Date.now()
     
     // 설정에서 프롬프트 타입 확인
     const promptSettings = schedule.settings || {}
@@ -57,21 +59,35 @@ export async function POST(request: NextRequest) {
     if (promptSettings.promptType === 'custom' && promptSettings.customPrompt) {
       // 커스텀 프롬프트 사용
       prompt = promptSettings.customPrompt
+      console.log('🎯 Using custom prompt from schedule settings')
     } else {
-      // 자동 프롬프트 사용
-      const randomTopic = schedule.topics[Math.floor(Math.random() * schedule.topics.length)]
-      prompt = getScheduledPromptTemplate(
+      // 데이터베이스 프롬프트 사용
+      const topic = schedule.topics?.[Math.floor(Math.random() * (schedule.topics?.length || 1))] || schedule.topic || ''
+      prompt = await getDatabasePromptTemplate(
         schedule.content_type,
-        schedule.tone,
-        randomTopic,
+        schedule.tone || schedule.content_tone,
+        topic,
         schedule.target_audience,
         schedule.additional_instructions
       )
+      console.log('🗄️ Using database prompt template for scheduled generation')
     }
+    
+    const promptFetchTime = Date.now() - startTime
 
+    // 창의성 설정 가져오기
+    const creativitySettings = schedule.creativity_level 
+      ? CREATIVITY_LEVELS[schedule.creativity_level as keyof typeof CREATIVITY_LEVELS]
+      : CREATIVITY_LEVELS.balanced
+
+    console.log('🤖 Generating scheduled content with database prompt')
+    const generateStartTime = Date.now()
+    
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
+      temperature: creativitySettings.temperature,
+      top_p: creativitySettings.top_p,
       messages: [
         {
           role: 'user',
@@ -80,31 +96,45 @@ export async function POST(request: NextRequest) {
       ]
     })
 
+    const generateTime = Date.now() - generateStartTime
     const generatedContent = message.content[0]?.type === 'text' 
       ? message.content[0].text 
       : ''
+      
+    console.log('✅ Scheduled content generated successfully')
 
-    // 콘텐츠 저장
+    // 콘텐츠 저장 (dogfooding 환경에 맞게 수정)
+    const contentData: any = {
+      user_id: schedule.user_id,
+      title: schedule.name,
+      content: generatedContent,
+      content_type: schedule.content_type,  // content_type 컬럼만 사용
+      tone: schedule.tone || schedule.content_tone || 'professional',
+      topic: schedule.topics?.[0] || schedule.topic || '',
+      status: 'draft',
+      schedule_id: scheduleId
+    }
+    
+    console.log('📝 Attempting to save content:', JSON.stringify(contentData, null, 2))
+    
     const { data: savedContent, error: contentError } = await supabase
       .from('contents')
-      .insert({
-        user_id: schedule.user_id,
-        title: `${schedule.name} - 테스트 실행`,
-        content_type: schedule.content_type,
-        tone: schedule.tone,
-        topic: schedule.topics?.[0] || '',
-        content: generatedContent,
-        status: 'draft',
-        schedule_id: scheduleId,
-        auto_generated: true
-      })
+      .insert(contentData)
       .select()
       .single()
 
-    if (contentError || !savedContent) {
-      console.error('Failed to save content:', contentError)
+    if (contentError) {
+      console.error('❌ Failed to save content - Error details:', JSON.stringify(contentError, null, 2))
+      console.error('❌ Content data that failed:', JSON.stringify(contentData, null, 2))
       throw contentError
     }
+
+    if (!savedContent) {
+      console.error('❌ No content returned from insert operation')
+      throw new Error('No content returned from database')
+    }
+
+    console.log('✅ Content saved successfully:', JSON.stringify(savedContent, null, 2))
 
     // 스케줄 통계 업데이트
     await supabase
@@ -126,10 +156,22 @@ export async function POST(request: NextRequest) {
       }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error running scheduled content generation:', error)
+    const errorMessage = error.message || 'Unknown error occurred'
+    const errorDetails = {
+      message: errorMessage,
+      stack: error.stack,
+      name: error.name
+    }
+    console.error('Error details:', errorDetails)
+    
     return NextResponse.json(
-      { error: 'Failed to run scheduled generation', details: error.message },
+      { 
+        error: 'Failed to run scheduled generation', 
+        message: errorMessage,
+        details: errorDetails 
+      },
       { status: 500 }
     )
   }

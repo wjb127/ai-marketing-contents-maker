@@ -1,0 +1,14 @@
+
+> ai-sns-contents-maker@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 95796, using available port 3002 instead.
+   ▲ Next.js 15.4.5
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.0.6:3002
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 2.1s
+   Reload env: .env.local
+   Reload env: .env.local

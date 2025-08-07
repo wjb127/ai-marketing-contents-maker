@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import {
   Box,
   Button,
@@ -44,13 +45,13 @@ import {
   StatNumber,
   StatHelpText,
 } from '@chakra-ui/react'
-import { AddIcon, DeleteIcon, EditIcon, TimeIcon, RepeatIcon } from '@chakra-ui/icons'
-import { useState, useEffect } from 'react'
+import { AddIcon, DeleteIcon, EditIcon, TimeIcon, RepeatIcon, ViewIcon } from '@chakra-ui/icons'
 import Layout from '@/components/layout/Layout'
 import { useAuth } from '@/hooks/useAuth'
 import { useUser } from '@/hooks/useUser'
 import { useSchedules } from '@/hooks/useSchedules'
 import { usePrompts } from '@/hooks/usePrompts'
+import { useContents } from '@/hooks/useContents'
 import { PLAN_LIMITS, CONTENT_TYPE_LABELS, TONE_LABELS, FREQUENCY_LABELS } from '@/utils/constants'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 
@@ -58,7 +59,53 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute'
 export default function SchedulePage() {
   const { user: authUser } = useAuth()
   const { user } = useUser()
-  const { schedules, loading, error, createSchedule, toggleSchedule, deleteSchedule, updateSchedule } = useSchedules()
+  const { schedules, loading, error, createSchedule, toggleSchedule, deleteSchedule, updateSchedule, refetch: refetchSchedules } = useSchedules()
+  const { contents, refetch: refetchContents } = useContents()
+  
+  // Client-side only state to prevent hydration mismatch
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  // Safe date formatting to prevent hydration mismatch (한국 시간대)
+  const formatDate = (dateString: string, options: 'datetime' | 'date' = 'date') => {
+    if (!isClient || !dateString) return '-'
+    
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return '-'
+      
+      // 한국 시간대로 표시
+      const kstOptions: Intl.DateTimeFormatOptions = {
+        timeZone: 'Asia/Seoul',
+        ...(options === 'datetime' 
+          ? { 
+              year: 'numeric', 
+              month: '2-digit', 
+              day: '2-digit', 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            }
+          : { 
+              year: 'numeric', 
+              month: '2-digit', 
+              day: '2-digit' 
+            }
+        )
+      }
+      
+      if (options === 'datetime') {
+        return date.toLocaleString('ko-KR', kstOptions) + ' KST'
+      } else {
+        return date.toLocaleDateString('ko-KR', kstOptions)
+      }
+    } catch {
+      return '-'
+    }
+  }
   const { 
     prompts: promptTemplates, 
     loading: promptsLoading, 
@@ -84,6 +131,8 @@ export default function SchedulePage() {
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null)
+  const [runningScheduleId, setRunningScheduleId] = useState<string | null>(null)
+  const [viewHistoryScheduleId, setViewHistoryScheduleId] = useState<string | null>(null)
 
   // 폼 상태
   const [formData, setFormData] = useState({
@@ -242,6 +291,18 @@ export default function SchedulePage() {
 
   // 스케줄 테스트 (즉시 실행)
   const handleTestSchedule = async (scheduleId: string) => {
+    setRunningScheduleId(scheduleId)
+    
+    // 시작 토스트 메시지
+    toast({
+      title: '🚀 콘텐츠 생성 중...',
+      description: 'AI가 콘텐츠를 생성하고 있습니다. 잠시만 기다려주세요.',
+      status: 'info',
+      duration: null, // 자동으로 사라지지 않음
+      isClosable: false,
+      id: `generating-${scheduleId}`, // 나중에 닫기 위한 ID
+    })
+    
     try {
       const response = await fetch('/api/schedule/run', {
         method: 'POST',
@@ -252,26 +313,74 @@ export default function SchedulePage() {
       })
 
       if (!response.ok) {
-        throw new Error('스케줄 실행에 실패했습니다.')
+        let errorData;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json().catch(() => ({ error: 'JSON 파싱 실패' }));
+        } else {
+          const text = await response.text();
+          errorData = { error: text || 'Unknown error' };
+        }
+        
+        console.error('Schedule run error response:', errorData)
+        const errorMessage = errorData.message || errorData.error || '스케줄 실행에 실패했습니다.'
+        console.error('Error message:', errorMessage)
+        if (errorData.details) {
+          console.error('Error details:', errorData.details)
+        }
+        throw new Error(errorMessage)
       }
 
+      // 성공 응답 파싱
+      const result = await response.json().catch(() => null);
+      
+      // 이전 토스트 닫기
+      toast.close(`generating-${scheduleId}`)
+      
+      // 성공 토스트
       toast({
-        title: '스케줄 실행 완료',
-        description: '콘텐츠가 성공적으로 생성되었습니다. 콘텐츠 라이브러리에서 확인하세요.',
+        title: '✅ 콘텐츠 생성 완료!',
+        description: result?.message || '콘텐츠가 성공적으로 생성되었습니다. 콘텐츠 라이브러리에서 확인하세요.',
         status: 'success',
         duration: 5000,
         isClosable: true,
       })
+      
+      // 스케줄 목록 새로고침
+      await refetchSchedules()
+      
+      // 콘텐츠 목록도 새로고침 (새로 생성된 콘텐츠를 보여주기 위해)
+      console.log('🔄 Refreshing contents after schedule execution')
+      await refetchContents()
     } catch (error) {
       console.error('스케줄 테스트 중 오류:', error)
+      
+      // 이전 토스트 닫기
+      toast.close(`generating-${scheduleId}`)
+      
+      // 에러 토스트
       toast({
-        title: '스케줄 실행 실패',
-        description: '스케줄 실행 중 오류가 발생했습니다.',
+        title: '❌ 콘텐츠 생성 실패',
+        description: '스케줄 실행 중 오류가 발생했습니다. 다시 시도해주세요.',
         status: 'error',
         duration: 5000,
         isClosable: true,
       })
+    } finally {
+      setRunningScheduleId(null)
     }
+  }
+
+  // 스케줄별 생성된 콘텐츠 가져오기
+  const getScheduleContents = (scheduleId: string) => {
+    return contents.filter(content => content.schedule_id === scheduleId)
+      .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
+  }
+
+  // 스케줄 이력 보기
+  const handleViewHistory = (scheduleId: string) => {
+    setViewHistoryScheduleId(scheduleId === viewHistoryScheduleId ? null : scheduleId)
   }
 
   // 스케줄 생성
@@ -398,21 +507,43 @@ export default function SchedulePage() {
             <VStack align="start" spacing={2}>
               <Heading size="xl" color="gray.800">⏰ 스케줄 관리</Heading>
               <Text color="gray.600" fontSize="lg">
-                자동 콘텐츠 생성 스케줄을 관리하세요
+                자동 콘텐츠 생성 스케줄을 관리하세요 (한국시간 KST 기준)
               </Text>
             </VStack>
             
-            <Button
-              leftIcon={<AddIcon />}
-              colorScheme="brand"
-              onClick={() => {
-                resetForm()
-                onPromptModalOpen()
-              }}
-              shadow="sm"
-            >
-              새 프롬프트 만들기
-            </Button>
+            <HStack spacing={3}>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/schedule/debug')
+                    const data = await response.json()
+                    console.log('🐛 Schedule Debug Info:', data)
+                    toast({
+                      title: '디버그 정보 확인',
+                      description: '브라우저 콘솔을 확인하세요.',
+                      status: 'info',
+                      duration: 3000,
+                    })
+                  } catch (error) {
+                    console.error('Debug failed:', error)
+                  }
+                }}
+              >
+                🐛 디버그
+              </Button>
+              <Button
+                leftIcon={<AddIcon />}
+                colorScheme="brand"
+                onClick={() => {
+                  resetForm()
+                  onPromptModalOpen()
+                }}
+                shadow="sm"
+              >
+                새 프롬프트 만들기
+              </Button>
+            </HStack>
           </HStack>
 
           {/* 통계 카드 */}
@@ -477,7 +608,8 @@ export default function SchedulePage() {
                 ) : (
                   <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
                     {schedules.map((schedule) => (
-                      <Card key={schedule.id} shadow="sm">
+                      <React.Fragment key={schedule.id}>
+                        <Card shadow="sm">
                         <CardHeader>
                           <HStack justify="space-between">
                             <VStack align="start" spacing={1}>
@@ -534,7 +666,7 @@ export default function SchedulePage() {
                             </Text>
                             {schedule.last_run_at && (
                               <Text fontSize="xs" color="gray.500">
-                                마지막 실행: {new Date(schedule.last_run_at).toLocaleString('ko-KR')}
+                                마지막 실행: {formatDate(schedule.last_run_at, 'datetime')}
                               </Text>
                             )}
                             <VStack spacing={2} width="full">
@@ -543,10 +675,24 @@ export default function SchedulePage() {
                                 colorScheme="brand"
                                 variant="outline"
                                 width="full"
-                                leftIcon={<TimeIcon />}
+                                leftIcon={runningScheduleId === schedule.id ? undefined : <TimeIcon />}
                                 onClick={() => handleTestSchedule(schedule.id)}
+                                isLoading={runningScheduleId === schedule.id}
+                                loadingText="생성 중..."
+                                isDisabled={runningScheduleId !== null && runningScheduleId !== schedule.id}
+                                _hover={runningScheduleId === schedule.id ? {} : undefined}
                               >
-                                지금 실행하기
+                                {runningScheduleId === schedule.id ? '생성 중...' : '지금 실행하기'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                colorScheme="purple"
+                                variant="outline"
+                                width="full"
+                                leftIcon={<ViewIcon />}
+                                onClick={() => handleViewHistory(schedule.id)}
+                              >
+                                생성 이력 ({getScheduleContents(schedule.id).length})
                               </Button>
                               <Button
                                 size="sm"
@@ -562,6 +708,101 @@ export default function SchedulePage() {
                           </VStack>
                         </CardBody>
                       </Card>
+
+                      {/* 스케줄 이력 섹션 */}
+                      {viewHistoryScheduleId === schedule.id && (
+                        <Box mt={4}>
+                          <Card bg="gray.50" borderColor="purple.200">
+                            <CardHeader pb={2}>
+                              <Heading size="sm" color="purple.700">
+                                📈 생성된 콘텐츠 이력
+                              </Heading>
+                            </CardHeader>
+                            <CardBody pt={0}>
+                              {(() => {
+                                const scheduleContents = getScheduleContents(schedule.id)
+                                
+                                if (scheduleContents.length === 0) {
+                                  return (
+                                    <Text color="gray.500" textAlign="center" py={4}>
+                                      아직 생성된 콘텐츠가 없습니다.
+                                    </Text>
+                                  )
+                                }
+
+                                return (
+                                  <VStack spacing={3} align="stretch">
+                                    {scheduleContents.slice(0, 5).map((content, index) => (
+                                      <Box
+                                        key={content.id}
+                                        p={3}
+                                        bg="white"
+                                        borderRadius="md"
+                                        border="1px solid"
+                                        borderColor="gray.200"
+                                        _hover={{ borderColor: "purple.300", shadow: "sm" }}
+                                        transition="all 0.2s"
+                                      >
+                                        <HStack justify="space-between" align="start">
+                                          <VStack align="start" spacing={1} flex={1}>
+                                            <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+                                              {content.title}
+                                            </Text>
+                                            <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                                              {content.content.substring(0, 100)}...
+                                            </Text>
+                                            <HStack spacing={2}>
+                                              <Badge size="xs" colorScheme="blue">
+                                                {content.content_type}
+                                              </Badge>
+                                              <Badge size="xs" colorScheme="green">
+                                                {content.status}
+                                              </Badge>
+                                              <Text fontSize="xs" color="gray.500">
+                                                {formatDate(content.created_at || '')}
+                                              </Text>
+                                            </HStack>
+                                          </VStack>
+                                          <Button
+                                            size="xs"
+                                            variant="ghost"
+                                            colorScheme="purple"
+                                            onClick={() => {
+                                              // 콘텐츠 라이브러리로 이동
+                                              window.open('/content/library', '_blank')
+                                            }}
+                                          >
+                                            보기
+                                          </Button>
+                                        </HStack>
+                                      </Box>
+                                    ))}
+                                    
+                                    {scheduleContents.length > 5 && (
+                                      <Text fontSize="xs" color="gray.500" textAlign="center">
+                                        최근 5개만 표시됩니다. 전체 보기는 콘텐츠 라이브러리에서 확인하세요.
+                                      </Text>
+                                    )}
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      colorScheme="purple"
+                                      onClick={() => {
+                                        // 콘텐츠 라이브러리로 이동하면서 해당 스케줄로 필터링
+                                        window.open('/content/library', '_blank')
+                                      }}
+                                    >
+                                      콘텐츠 라이브러리에서 전체 보기
+                                    </Button>
+                                  </VStack>
+                                )
+                              })()}
+                            </CardBody>
+                          </Card>
+                        </Box>
+                      )}
+                      </React.Fragment>
                     ))}
                   </SimpleGrid>
                 )}

@@ -183,3 +183,30 @@ export const CONTENT_TYPE_SPECS = {
     description: 'Facebook social media post',
   },
 } as const
+
+export const CREATIVITY_LEVELS = {
+  conservative: {
+    label: '보수적 (일관성 높음)',
+    temperature: 0.3,
+    top_p: 0.7,
+    description: '안정적이고 예측 가능한 콘텐츠'
+  },
+  balanced: {
+    label: '균형 (권장)',
+    temperature: 0.7,
+    top_p: 0.9,
+    description: '창의성과 일관성의 균형'
+  },
+  creative: {
+    label: '창의적 (다양성 높음)',
+    temperature: 0.9,
+    top_p: 0.95,
+    description: '독창적이고 다양한 콘텐츠'
+  },
+  experimental: {
+    label: '실험적 (매우 창의적)',
+    temperature: 1.0,
+    top_p: 0.95,
+    description: '예측 불가능하고 독특한 콘텐츠'
+  }
+} as const

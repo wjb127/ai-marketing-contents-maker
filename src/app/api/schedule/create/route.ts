@@ -51,26 +51,30 @@ export async function POST(request: NextRequest) {
 
     // Calculate next run time
     const nextRun = calculateNextRun(frequency, time_of_day, timezone)
-    console.log('Calculated next run time:', nextRun.toISOString())
+    
+    // KST로 변환해서 로그 출력
+    const nextRunKST = new Date(nextRun.getTime() + 9 * 60 * 60 * 1000)
+    console.log('📅 Next run scheduled:', {
+      utc: nextRun.toISOString(),
+      kst: nextRunKST.toISOString(),
+      kstReadable: nextRunKST.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+    })
 
-    // Prepare data for insertion
+    // Prepare data for insertion (dogfooding schema)
     const insertData = {
       user_id: user.id,
       name,
       content_type,
-      tone,
-      topics: [topic], // Convert single topic to array
+      content_tone: tone, // dogfooding schema uses content_tone
+      topic: topic || '', // dogfooding schema uses single topic
       target_audience,
       additional_instructions,
-      frequency: dbFrequency, // Use mapped frequency for database
-      time: time_of_day,
+      frequency: frequency, // Store original frequency
+      time_of_day,
       timezone,
       is_active: true,
-      next_run_at: nextRun.toISOString(),
-      settings: {
-        ...settings,
-        actualFrequency: frequency // Store actual frequency in settings
-      }
+      next_run_at: nextRun.toISOString()
+      // settings removed - not in dogfooding schema
     }
     console.log('Data to insert:', insertData)
 
@@ -91,25 +95,51 @@ export async function POST(request: NextRequest) {
 
     console.log('Schedule created in database:', data)
 
-    // Schedule with QStash (only if QStash is configured)
+    // Schedule with QStash (only if QStash is configured and not local development)
     let qstashScheduled = false
-    if (process.env.QSTASH_TOKEN) {
+    const isLocal = process.env.NEXT_PUBLIC_URL?.includes('localhost')
+    
+    if (process.env.QSTASH_TOKEN && !isLocal) {
       try {
+        console.log('🔄 Starting QStash scheduling for schedule:', data.id)
+        console.log('🔄 NextRun time:', {
+          utc: nextRun.toISOString(),
+          timestamp: nextRun.getTime(),
+          unixSeconds: Math.floor(nextRun.getTime() / 1000)
+        })
+        
         const messageId = await scheduleContentGeneration(data.id, nextRun)
         
+        console.log('✅ QStash message created successfully:', messageId)
+        
         // Update schedule with QStash message ID
-        await supabase
+        const { error: updateError } = await supabase
           .from('schedules')
           .update({ qstash_message_id: messageId })
           .eq('id', data.id)
           
+        if (updateError) {
+          console.error('❌ Failed to update schedule with QStash message ID:', updateError)
+          throw new Error(`Failed to update QStash message ID: ${updateError.message}`)
+        }
+          
         qstashScheduled = true
-        console.log('Schedule created and queued with QStash:', messageId)
-      } catch (qstashError) {
-        console.error('Failed to schedule with QStash:', qstashError)
+        console.log('✅ Schedule created and queued with QStash:', messageId)
+      } catch (qstashError: any) {
+        console.error('❌ Failed to schedule with QStash:', {
+          error: qstashError.message,
+          stack: qstashError.stack,
+          scheduleId: data.id,
+          nextRun: nextRun.toISOString()
+        })
         // 스케줄은 생성되었지만 QStash 예약 실패
         // 나중에 크론잡으로 복구 가능
       }
+    } else if (isLocal) {
+      console.log('🏠 Local development detected - using database-only scheduling')
+      qstashScheduled = true // 로컬에서는 DB 기반 스케줄링 사용
+    } else {
+      console.log('⚠️ QStash token not found, skipping scheduling')
     }
 
     return NextResponse.json({

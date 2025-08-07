@@ -18,7 +18,7 @@ import {
   useToast,
   Tooltip,
 } from '@chakra-ui/react'
-import { EditIcon, DeleteIcon, CalendarIcon, ViewIcon, MoreVertical } from 'lucide-react'
+import { EditIcon, DeleteIcon, CalendarIcon, ViewIcon, MoreVertical, Copy } from 'lucide-react'
 import { Content } from '@/types'
 
 interface ContentCardProps {
@@ -27,6 +27,7 @@ interface ContentCardProps {
   onDelete?: (contentId: string) => void
   onSchedule?: (content: Content) => void
   onView?: (content: Content) => void
+  onCopy?: (content: Content) => void
 }
 
 export default function ContentCard({
@@ -35,6 +36,7 @@ export default function ContentCard({
   onDelete,
   onSchedule,
   onView,
+  onCopy,
 }: ContentCardProps) {
   const toast = useToast()
 
@@ -85,6 +87,9 @@ export default function ContentCard({
       case 'view':
         onView?.(content)
         break
+      case 'copy':
+        onCopy?.(content)
+        break
     }
   }
 
@@ -122,6 +127,10 @@ export default function ContentCard({
               <MenuItem onClick={() => handleAction('edit')}>
                 <EditIcon size={16} style={{ marginRight: '8px' }} />
                 Edit
+              </MenuItem>
+              <MenuItem onClick={() => handleAction('copy')}>
+                <Copy size={16} style={{ marginRight: '8px' }} />
+                Copy Content
               </MenuItem>
               {content.status === 'draft' && (
                 <MenuItem onClick={() => handleAction('schedule')}>

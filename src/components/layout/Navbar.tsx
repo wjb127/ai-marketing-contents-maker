@@ -411,4 +411,14 @@ const NAV_ITEMS: Array<NavItem> = [
     label: '구독',
     href: '/subscription',
   },
+  {
+    label: '관리',
+    children: [
+      {
+        label: '프롬프트 관리',
+        subLabel: 'AI 프롬프트 템플릿을 관리하고 버전을 추적하세요',
+        href: '/admin/prompts',
+      },
+    ],
+  },
 ]

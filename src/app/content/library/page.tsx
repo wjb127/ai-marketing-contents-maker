@@ -16,8 +16,22 @@ import {
   InputLeftElement,
   Flex,
   Spacer,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+  Textarea,
+  FormControl,
+  FormLabel,
+  Divider,
+  IconButton,
+  Tooltip,
 } from '@chakra-ui/react'
-import { SearchIcon, AddIcon } from '@chakra-ui/icons'
+import { SearchIcon, AddIcon, RepeatIcon, EditIcon, ViewIcon, CopyIcon } from '@chakra-ui/icons'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Layout from '@/components/layout/Layout'
@@ -34,10 +48,62 @@ export default function ContentLibraryPage() {
   const router = useRouter()
   const toast = useToast()
   
-  const { contents, loading, error, deleteContent, updateContent } = useContents()
+  const { contents, loading, error, deleteContent, updateContent, refetch } = useContents()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterSource, setFilterSource] = useState('all') // 'all', 'manual', 'scheduled'
+  const [refreshing, setRefreshing] = useState(false)
+  
+  // 모달 상태
+  const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure()
+  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure()
+  const [selectedContent, setSelectedContent] = useState<Content | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    content: '',
+    content_type: '',
+    tone: '',
+    topic: '',
+    status: ''
+  })
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  // 로깅 추가
+  useEffect(() => {
+    console.log('📚 Content Library - Contents updated:', contents.length, 'items')
+    if (contents.length > 0) {
+      console.log('📚 First few contents:', contents.slice(0, 3).map(c => ({
+        id: c.id,
+        title: c.title,
+        content_type: c.content_type,
+        created_at: c.created_at
+      })))
+    }
+  }, [contents])
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      console.log('🔄 Manually refreshing contents...')
+      await refetch()
+      toast({
+        title: '새로고침 완료',
+        description: '콘텐츠 목록을 업데이트했습니다.',
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (error) {
+      toast({
+        title: '새로고침 실패',
+        description: '콘텐츠를 불러오는 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
 
   const handleDelete = async (contentId: string) => {
@@ -59,14 +125,77 @@ export default function ContentLibraryPage() {
     }
   }
 
+  const handleView = (content: Content) => {
+    setSelectedContent(content)
+    onViewOpen()
+  }
+
   const handleEdit = (content: Content) => {
-    // Here you would navigate to an edit page or open an edit modal
-    toast({
-      title: '편집 기능',
-      description: '편집 기능이 곧 출시됩니다!',
-      status: 'info',
-      duration: 3000,
+    setSelectedContent(content)
+    setEditFormData({
+      title: content.title || '',
+      content: content.content || '',
+      content_type: content.content_type || '',
+      tone: content.tone || '',
+      topic: content.topic || '',
+      status: content.status || 'draft'
     })
+    onEditOpen()
+  }
+
+  const handleSaveEdit = async () => {
+    if (!selectedContent) return
+
+    setIsUpdating(true)
+    try {
+      await updateContent(selectedContent.id, {
+        title: editFormData.title,
+        content: editFormData.content,
+        content_type: editFormData.content_type as any,
+        tone: editFormData.tone as any,
+        topic: editFormData.topic,
+        status: editFormData.status as any,
+        updated_at: new Date().toISOString()
+      })
+
+      toast({
+        title: '수정 완료',
+        description: '콘텐츠가 성공적으로 수정되었습니다.',
+        status: 'success',
+        duration: 3000,
+      })
+
+      onEditClose()
+      await refetch() // 목록 새로고침
+    } catch (error) {
+      toast({
+        title: '수정 실패',
+        description: '콘텐츠 수정에 실패했습니다. 다시 시도해주세요.',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleCopyContent = async (content: Content) => {
+    try {
+      await navigator.clipboard.writeText(content.content)
+      toast({
+        title: '복사 완료',
+        description: '콘텐츠가 클립보드에 복사되었습니다.',
+        status: 'success',
+        duration: 2000,
+      })
+    } catch (error) {
+      toast({
+        title: '복사 실패',
+        description: '클립보드 복사에 실패했습니다.',
+        status: 'error',
+        duration: 3000,
+      })
+    }
   }
 
   const handleSchedule = (content: Content) => {
@@ -79,25 +208,20 @@ export default function ContentLibraryPage() {
     })
   }
 
-  const handleView = (content: Content) => {
-    // Here you would navigate to a detailed view
-    toast({
-      title: '콘텐츠 보기',
-      description: '상세 보기 기능이 곧 출시됩니다!',
-      status: 'info',
-      duration: 3000,
-    })
-  }
-
 
   const filteredContents = contents.filter(content => {
     const matchesSearch = (content.topic || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         content.content.toLowerCase().includes(searchTerm.toLowerCase())
+                         content.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (content.title || '').toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesType = filterType === 'all' || content.content_type === filterType
     const matchesStatus = filterStatus === 'all' || content.status === filterStatus
     
-    return matchesSearch && matchesType && matchesStatus
+    const matchesSource = filterSource === 'all' || 
+                         (filterSource === 'scheduled' && content.schedule_id) ||
+                         (filterSource === 'manual' && !content.schedule_id)
+    
+    return matchesSearch && matchesType && matchesStatus && matchesSource
   })
 
   const getStatusStats = () => {
@@ -135,15 +259,26 @@ export default function ContentLibraryPage() {
               </HStack>
             </Box>
             <Spacer />
-            <Button
-              leftIcon={<AddIcon />}
-              colorScheme="brand"
-              onClick={() => router.push('/content/create')}
-              size={{ base: 'md', md: 'lg' }}
-              shadow="sm"
-            >
-              새 콘텐츠 만들기
-            </Button>
+            <HStack spacing={3}>
+              <Button
+                leftIcon={<RepeatIcon />}
+                variant="outline"
+                onClick={handleRefresh}
+                isLoading={refreshing}
+                size={{ base: 'md', md: 'lg' }}
+              >
+                새로고침
+              </Button>
+              <Button
+                leftIcon={<AddIcon />}
+                colorScheme="brand"
+                onClick={() => router.push('/content/create')}
+                size={{ base: 'md', md: 'lg' }}
+                shadow="sm"
+              >
+                새 콘텐츠 만들기
+              </Button>
+            </HStack>
           </Flex>
 
           {/* Filters */}
@@ -184,13 +319,24 @@ export default function ContentLibraryPage() {
               <option value="archived">보관됨</option>
             </Select>
             
-            {(searchTerm || filterType !== 'all' || filterStatus !== 'all') && (
+            <Select
+              placeholder="모든 소스"
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              maxW="200px"
+            >
+              <option value="manual">직접 생성</option>
+              <option value="scheduled">스케줄 자동생성</option>
+            </Select>
+            
+            {(searchTerm || filterType !== 'all' || filterStatus !== 'all' || filterSource !== 'all') && (
               <Button
                 variant="ghost"
                 onClick={() => {
                   setSearchTerm('')
                   setFilterType('all')
                   setFilterStatus('all')
+                  setFilterSource('all')
                 }}
               >
                 필터 초기화
@@ -222,13 +368,13 @@ export default function ContentLibraryPage() {
             <Box textAlign="center" py={20}>
               <Text fontSize="6xl" mb={4}>📄</Text>
               <Heading size="md" mb={4} color="gray.500">
-                {searchTerm || filterType !== 'all' || filterStatus !== 'all'
+                {searchTerm || filterType !== 'all' || filterStatus !== 'all' || filterSource !== 'all'
                   ? '필터에 맞는 콘텐츠가 없습니다'
                   : '콘텐츠가 아직 없습니다'
                 }
               </Heading>
               <Text color="gray.400" mb={6}>
-                {searchTerm || filterType !== 'all' || filterStatus !== 'all'
+                {searchTerm || filterType !== 'all' || filterStatus !== 'all' || filterSource !== 'all'
                   ? '검색어나 필터를 조정해보세요'
                   : '첫 번째 콘텐츠를 만들어보세요'
                 }
@@ -256,12 +402,193 @@ export default function ContentLibraryPage() {
                     onDelete={handleDelete}
                     onSchedule={handleSchedule}
                     onView={handleView}
+                    onCopy={handleCopyContent}
                   />
                 ))}
               </SimpleGrid>
             </>
           )}
         </VStack>
+
+        {/* View Modal */}
+        <Modal isOpen={isViewOpen} onClose={onViewClose} size="xl">
+          <ModalOverlay />
+          <ModalContent maxW="800px">
+            <ModalHeader>
+              <VStack align="start" spacing={2}>
+                <Text fontSize="lg" fontWeight="bold">
+                  {selectedContent?.title || 'Untitled'}
+                </Text>
+                <HStack spacing={2}>
+                  <Badge colorScheme="blue" size="sm">
+                    {CONTENT_TYPE_LABELS[selectedContent?.content_type as keyof typeof CONTENT_TYPE_LABELS] || selectedContent?.content_type}
+                  </Badge>
+                  <Badge colorScheme="green" size="sm">
+                    {selectedContent?.tone}
+                  </Badge>
+                  <Badge colorScheme="orange" size="sm">
+                    {selectedContent?.status}
+                  </Badge>
+                </HStack>
+              </VStack>
+            </ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              <VStack align="stretch" spacing={4}>
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>주제:</Text>
+                  <Text color="gray.600">{selectedContent?.topic || 'N/A'}</Text>
+                </Box>
+                
+                <Divider />
+                
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>콘텐츠:</Text>
+                  <Box 
+                    p={4} 
+                    bg="gray.50" 
+                    borderRadius="md" 
+                    border="1px solid"
+                    borderColor="gray.200"
+                    maxH="400px"
+                    overflowY="auto"
+                  >
+                    <Text whiteSpace="pre-wrap" fontSize="sm">
+                      {selectedContent?.content}
+                    </Text>
+                  </Box>
+                </Box>
+
+                {selectedContent?.created_at && (
+                  <Box>
+                    <Text fontWeight="semibold" mb={1}>생성 시간:</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {new Date(selectedContent.created_at).toLocaleString('ko-KR')}
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <HStack spacing={3}>
+                <Button
+                  leftIcon={<CopyIcon />}
+                  onClick={() => selectedContent && handleCopyContent(selectedContent)}
+                  variant="outline"
+                >
+                  복사
+                </Button>
+                <Button
+                  leftIcon={<EditIcon />}
+                  colorScheme="blue"
+                  onClick={() => {
+                    if (selectedContent) {
+                      onViewClose()
+                      handleEdit(selectedContent)
+                    }
+                  }}
+                >
+                  편집
+                </Button>
+              </HStack>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        {/* Edit Modal */}
+        <Modal isOpen={isEditOpen} onClose={onEditClose} size="xl">
+          <ModalOverlay />
+          <ModalContent maxW="800px">
+            <ModalHeader>콘텐츠 편집</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              <VStack spacing={4} align="stretch">
+                <FormControl>
+                  <FormLabel>제목</FormLabel>
+                  <Input
+                    value={editFormData.title}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="콘텐츠 제목을 입력하세요"
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel>주제</FormLabel>
+                  <Input
+                    value={editFormData.topic}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, topic: e.target.value }))}
+                    placeholder="콘텐츠 주제를 입력하세요"
+                  />
+                </FormControl>
+
+                <HStack spacing={4}>
+                  <FormControl>
+                    <FormLabel>콘텐츠 타입</FormLabel>
+                    <Select
+                      value={editFormData.content_type}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, content_type: e.target.value }))}
+                    >
+                      {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>톤</FormLabel>
+                    <Select
+                      value={editFormData.tone}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, tone: e.target.value }))}
+                    >
+                      {Object.entries(TONE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>상태</FormLabel>
+                    <Select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                    >
+                      <option value="draft">초안</option>
+                      <option value="published">발행됨</option>
+                      <option value="scheduled">예약됨</option>
+                      <option value="archived">보관됨</option>
+                    </Select>
+                  </FormControl>
+                </HStack>
+
+                <FormControl>
+                  <FormLabel>콘텐츠</FormLabel>
+                  <Textarea
+                    value={editFormData.content}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, content: e.target.value }))}
+                    placeholder="콘텐츠 내용을 입력하세요"
+                    minH="300px"
+                    resize="vertical"
+                  />
+                </FormControl>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <HStack spacing={3}>
+                <Button variant="ghost" onClick={onEditClose}>
+                  취소
+                </Button>
+                <Button
+                  colorScheme="blue"
+                  onClick={handleSaveEdit}
+                  isLoading={isUpdating}
+                  loadingText="저장 중..."
+                >
+                  저장
+                </Button>
+              </HStack>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
       </Layout>
     </ProtectedRoute>
   )

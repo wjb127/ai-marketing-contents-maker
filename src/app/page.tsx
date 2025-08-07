@@ -138,16 +138,16 @@ export default function HomePage() {
               _hover={{ transform: "translateY(-2px)", shadow: "xl" }}
             >
               <CardBody textAlign="center" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
-                <Text fontSize={{ base: "2xl", md: "3xl" }} mb={{ base: 3, md: 4 }}>📊</Text>
+                <Text fontSize={{ base: "2xl", md: "3xl" }} mb={{ base: 3, md: 4 }}>🎨</Text>
                 <Heading size={{ base: "sm", md: "md" }} mb={{ base: 2, md: 3 }}>
-                  간편한 관리
+                  창의성 조절
                 </Heading>
                 <Text 
                   color="gray.600" 
                   fontSize={{ base: "sm", md: "md" }}
                   lineHeight={{ base: "1.5", md: "1.4" }}
                 >
-                  생성된 모든 콘텐츠를 한 곳에서 관리하고, 필요에 따라 수정하거나 삭제할 수 있습니다.
+                  보수적부터 실험적까지 4단계 창의성 레벨로 콘텐츠의 다양성과 독창성을 조절할 수 있습니다.
                 </Text>
               </CardBody>
             </Card>

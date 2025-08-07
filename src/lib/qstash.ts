@@ -10,11 +10,23 @@ export const isQStashConfigured = () => {
   return !!(process.env.QSTASH_TOKEN && process.env.NEXT_PUBLIC_URL)
 }
 
-// 환경 확인 로그
+// 로컬 개발 여부 확인
+export const isLocalDevelopment = () => {
+  return process.env.NEXT_PUBLIC_URL?.includes('localhost')
+}
+
+// 환경 확인 로그 (더 자세히)
 if (typeof window === 'undefined') { // 서버 사이드에서만 실행
-  console.log('QStash configured:', isQStashConfigured())
+  console.log('🔧 QStash Configuration Check:')
+  console.log('- QStash Token:', process.env.QSTASH_TOKEN ? '✅ Set' : '❌ Missing')
+  console.log('- Next Public URL:', process.env.NEXT_PUBLIC_URL ? '✅ Set' : '❌ Missing')
+  console.log('- QStash Signing Key:', process.env.QSTASH_CURRENT_SIGNING_KEY ? '✅ Set' : '❌ Missing')
+  console.log('- QStash configured:', isQStashConfigured())
+  
   if (isQStashConfigured()) {
-    console.log('QStash URL:', process.env.NEXT_PUBLIC_URL)
+    console.log('- Target URL:', `${process.env.NEXT_PUBLIC_URL}/api/content/generate-scheduled`)
+  } else {
+    console.log('⚠️ QStash is not fully configured - schedules will be created but not executed automatically')
   }
 }
 
@@ -69,42 +81,64 @@ export async function cancelScheduledGeneration(messageId: string) {
   }
 }
 
-// 다음 실행 시간 계산
+// 다음 실행 시간 계산 (한국 시간대 지원)
 export function calculateNextRun(
   frequency: 'daily' | 'weekly' | 'monthly' | 'hourly' | '3hours' | '6hours',
   timeOfDay: string, // HH:mm format
   timezone: string = 'Asia/Seoul',
   fromDate: Date = new Date()
 ): Date {
-  const next = new Date(fromDate)
+  console.log('🕐 Calculating next run:', {
+    frequency,
+    timeOfDay,
+    timezone,
+    fromDate: fromDate.toISOString(),
+    fromDateKST: new Date(fromDate.getTime() + 9 * 60 * 60 * 1000).toISOString() // +9 hours for KST
+  })
   
   // 시간 간격 기반 스케줄링 (hourly, 3hours, 6hours)
   if (frequency === 'hourly' || frequency === '3hours' || frequency === '6hours') {
     const hoursToAdd = frequency === 'hourly' ? 1 : frequency === '3hours' ? 3 : 6
-    next.setTime(fromDate.getTime() + (hoursToAdd * 60 * 60 * 1000))
+    const next = new Date(fromDate.getTime() + (hoursToAdd * 60 * 60 * 1000))
+    console.log('⏰ Interval-based next run:', next.toISOString())
     return next
   }
   
-  // 일일/주간/월간 스케줄링 (기존 로직)
+  // 한국 시간대로 변환해서 계산
+  const koreaOffsetMs = 9 * 60 * 60 * 1000 // UTC+9
+  const nowInKorea = new Date(fromDate.getTime() + koreaOffsetMs)
+  
+  // 한국 시간 기준으로 목표 시간 설정
   const [hours, minutes] = timeOfDay.split(':').map(Number)
-  next.setHours(hours, minutes, 0, 0)
+  const targetInKorea = new Date(nowInKorea)
+  targetInKorea.setHours(hours, minutes, 0, 0)
   
   // 이미 지난 시간이면 다음 주기로
-  if (next <= fromDate) {
+  if (targetInKorea <= nowInKorea) {
     switch (frequency) {
       case 'daily':
-        next.setDate(next.getDate() + 1)
+        targetInKorea.setDate(targetInKorea.getDate() + 1)
         break
       case 'weekly':
-        next.setDate(next.getDate() + 7)
+        targetInKorea.setDate(targetInKorea.getDate() + 7)
         break
       case 'monthly':
-        next.setMonth(next.getMonth() + 1)
+        targetInKorea.setMonth(targetInKorea.getMonth() + 1)
         break
     }
   }
   
-  return next
+  // 다시 UTC로 변환
+  const nextRunUTC = new Date(targetInKorea.getTime() - koreaOffsetMs)
+  
+  console.log('🎯 Final next run calculation:', {
+    nowInKorea: nowInKorea.toISOString(),
+    targetInKorea: targetInKorea.toISOString(), 
+    nextRunUTC: nextRunUTC.toISOString(),
+    nextRunKST: new Date(nextRunUTC.getTime() + koreaOffsetMs).toISOString()
+  })
+  
+  return nextRunUTC
 }
 
 // 배치 스케줄링 (여러 스케줄을 한번에)

@@ -76,27 +76,50 @@ export function useContents() {
       setLoading(true)
       setError(null)
 
-      // DOGFOODING MODE: Combine saved contents with mock data
-      console.log('DOGFOODING MODE: Using mock data with saved contents')
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Get saved contents from localStorage
+      console.log('🔍 Fetching contents from database for user:', user.id)
+
+      // 실제 DB에서 콘텐츠 가져오기
+      const { data: dbContents, error: dbError } = await supabase
+        .from('contents')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (dbError) {
+        console.error('❌ Database error:', dbError)
+        // DB 에러가 있어도 localStorage와 mock 데이터는 보여주기
+      }
+
+      console.log('📊 Found', (dbContents?.length || 0), 'contents in database')
+      if (dbContents?.length) {
+        console.log('✅ Database contents:', JSON.stringify(dbContents.slice(0, 2), null, 2))
+      }
+
+      // Get saved contents from localStorage (이전 저장된 것들)
       const savedContents = localStorage.getItem('saved_contents')
       const userSavedContents = savedContents ? JSON.parse(savedContents) : []
       
-      // Combine mock data with saved contents (saved contents first)
-      const allContents = [...userSavedContents, ...MOCK_CONTENTS]
+      console.log('📱 Found', userSavedContents.length, 'contents in localStorage')
+
+      // DB 데이터 우선, 그 다음 localStorage, 마지막으로 mock 데이터
+      const allContents = [
+        ...(dbContents || []),
+        ...userSavedContents,
+        ...MOCK_CONTENTS
+      ]
       
+      console.log('📋 Total contents loaded:', allContents.length)
       setContents(allContents)
     } catch (error: any) {
-      console.error('Error fetching contents:', error)
+      console.error('❌ Error fetching contents:', error)
       setError(error.message)
+      
+      // 에러가 있어도 최소한 mock 데이터는 보여주기
+      setContents(MOCK_CONTENTS)
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [user, supabase])
 
   useEffect(() => {
     fetchContents()
@@ -108,6 +131,9 @@ export function useContents() {
     topic: string
     target_audience?: string
     additional_instructions?: string
+    creativityLevel?: string
+    temperature?: number
+    top_p?: number
   }) => {
     if (!user) throw new Error('User not authenticated')
 
@@ -216,26 +242,55 @@ export function useContents() {
     if (!user) throw new Error('User not authenticated')
 
     try {
-      // DOGFOODING MODE: Mock update operation
-      console.log('DOGFOODING MODE: Mock update content', contentId, updates)
+      console.log('📝 Updating content:', contentId, updates)
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      const updatedContent = { 
+      // 실제 DB 업데이트 시도
+      const { data: updatedContent, error: dbError } = await supabase
+        .from('contents')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', contentId)
+        .eq('user_id', user.id) // 보안을 위해 user_id도 확인
+        .select()
+        .single()
+
+      if (dbError) {
+        console.error('❌ Database update error:', dbError)
+        // DB 에러가 있어도 로컬 상태는 업데이트
+      } else {
+        console.log('✅ Content updated in database:', updatedContent)
+      }
+
+      // 로컬 상태 업데이트 (DB 성공 여부와 관계없이)
+      const finalUpdates = { 
         ...updates, 
         updated_at: new Date().toISOString() 
       }
       
       setContents(prev => 
         prev.map(content => 
-          content.id === contentId ? { ...content, ...updatedContent } : content
+          content.id === contentId ? { ...content, ...finalUpdates } : content
         )
       )
 
-      return updatedContent
+      // localStorage에도 업데이트 (saved_ 접두사가 있는 경우)
+      if (contentId.startsWith('saved_')) {
+        const savedContents = localStorage.getItem('saved_contents')
+        if (savedContents) {
+          const userSavedContents = JSON.parse(savedContents)
+          const updatedSavedContents = userSavedContents.map((content: Content) => 
+            content.id === contentId ? { ...content, ...finalUpdates } : content
+          )
+          localStorage.setItem('saved_contents', JSON.stringify(updatedSavedContents))
+          console.log('📱 Updated content in localStorage')
+        }
+      }
+
+      return finalUpdates
     } catch (error: any) {
-      console.error('Error updating content:', error)
+      console.error('❌ Error updating content:', error)
       throw error
     }
   }
