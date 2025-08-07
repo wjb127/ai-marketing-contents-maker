@@ -28,8 +28,8 @@ export const GlobalClock: React.FC = () => {
     )
   }
 
-  // 한국 시간으로 변환 (+30분 보정)
-  const nowKST = new Date(currentTime.getTime() + 0.5 * 60 * 60 * 1000)
+  // 한국 시간으로 변환 (+1초 보정)
+  const nowKST = new Date(currentTime.getTime() + 1000)
   
   const formatCurrentTime = (date: Date) => {
     return date.toLocaleString('ko-KR', {

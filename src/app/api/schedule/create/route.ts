@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
     // Calculate next run time
     const nextRun = calculateNextRun(frequency, time_of_day, timezone)
     
-    // KST로 변환해서 로그 출력 (+30분 보정)
-    const nextRunKST = new Date(nextRun.getTime() + 0.5 * 60 * 60 * 1000)
+    // KST로 변환해서 로그 출력 (+1초 보정)
+    const nextRunKST = new Date(nextRun.getTime() + 1000)
     console.log('📅 Next run scheduled:', {
       utc: nextRun.toISOString(),
       kst: nextRunKST.toISOString(),
