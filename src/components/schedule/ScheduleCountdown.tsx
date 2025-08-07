@@ -41,10 +41,10 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
     return null // SSR 방지
   }
 
-  // 한국 시간으로 변환
-  const nowKST = new Date(currentTime.getTime() + 9 * 60 * 60 * 1000)
+  // 한국 시간으로 변환 (서버 시간이 3시간 느려서 +12시간으로 보정)
+  const nowKST = new Date(currentTime.getTime() + 12 * 60 * 60 * 1000)
   const nextRunKST = new Date(nextRunAt)
-  const nextRunKSTLocal = new Date(nextRunKST.getTime() + 9 * 60 * 60 * 1000)
+  const nextRunKSTLocal = new Date(nextRunKST.getTime() + 12 * 60 * 60 * 1000)
 
   // 시간 차이 계산 (밀리초)
   const timeDiff = nextRunKSTLocal.getTime() - nowKST.getTime()
