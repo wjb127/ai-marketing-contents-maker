@@ -19,6 +19,8 @@ export const isLocalDevelopment = () => {
 if (typeof window === 'undefined') { // 서버 사이드에서만 실행
   console.log('🔧 QStash Configuration Check:')
   console.log('- QStash Token:', process.env.QSTASH_TOKEN ? '✅ Set' : '❌ Missing')
+  console.log('- QStash Token Length:', process.env.QSTASH_TOKEN ? process.env.QSTASH_TOKEN.length : 0)
+  console.log('- QStash Token Preview:', process.env.QSTASH_TOKEN ? process.env.QSTASH_TOKEN.substring(0, 10) + '...' : 'N/A')
   console.log('- Next Public URL:', process.env.NEXT_PUBLIC_URL ? '✅ Set' : '❌ Missing')
   console.log('- QStash Signing Key:', process.env.QSTASH_CURRENT_SIGNING_KEY ? '✅ Set' : '❌ Missing')
   console.log('- QStash configured:', isQStashConfigured())
@@ -47,22 +49,32 @@ export async function scheduleContentGeneration(
     url
   })
   
-  const response = await qstash.publishJSON({
-    url,
-    body: {
-      scheduleId,
-      timestamp: new Date().toISOString()
-    },
-    notBefore: Math.floor(executeAt.getTime() / 1000), // Unix timestamp
-    retries: 3,
-    timeout: '60s', // 타임아웃 증가
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
+  try {
+    const response = await qstash.publishJSON({
+      url,
+      body: {
+        scheduleId,
+        timestamp: new Date().toISOString()
+      },
+      notBefore: Math.floor(executeAt.getTime() / 1000), // Unix timestamp
+      retries: 3,
+      timeout: '60s', // 타임아웃 증가
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
 
-  console.log('QStash message scheduled:', response.messageId)
-  return response.messageId
+    console.log('QStash message scheduled:', response.messageId)
+    return response.messageId
+  } catch (error: any) {
+    console.error('❌ QStash publishJSON failed:', {
+      error: error.message,
+      status: error.status,
+      response: error.response,
+      tokenPreview: process.env.QSTASH_TOKEN?.substring(0, 10) + '...'
+    })
+    throw error
+  }
 }
 
 // 스케줄 취소

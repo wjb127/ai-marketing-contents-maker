@@ -102,19 +102,42 @@ export async function PUT(request: NextRequest) {
     // 데이터베이스 업데이트
     const updateData = {
       ...updates,
-      next_run_at: nextRun.toISOString(),
-      qstash_message_id: newQstashMessageId
+      next_run_at: nextRun.toISOString()
     }
 
     console.log('Updating schedule with:', updateData)
 
-    const { data, error } = await supabase
+    // 먼저 qstash_message_id 없이 업데이트 시도
+    let { data, error } = await supabase
       .from('schedules')
       .update(updateData)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single()
+
+    // qstash_message_id 컬럼이 있으면 별도로 업데이트
+    if (!error && scheduleChanged && newQstashMessageId !== existingSchedule.qstash_message_id) {
+      console.log('Updating qstash_message_id separately:', newQstashMessageId)
+      const { error: qstashUpdateError } = await supabase
+        .from('schedules')
+        .update({ qstash_message_id: newQstashMessageId })
+        .eq('id', id)
+        .eq('user_id', user.id)
+      
+      if (qstashUpdateError) {
+        console.log('qstash_message_id 컬럼이 없거나 업데이트 실패:', qstashUpdateError.message)
+        // qstash_message_id 업데이트 실패해도 전체 업데이트는 성공으로 처리
+      } else {
+        // 성공한 경우 최신 데이터 다시 조회
+        const { data: updatedData } = await supabase
+          .from('schedules')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (updatedData) data = updatedData
+      }
+    }
 
     if (error) {
       console.error('Database update error:', error)
