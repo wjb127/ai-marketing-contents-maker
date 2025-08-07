@@ -93,7 +93,7 @@ export function calculateNextRun(
     timeOfDay,
     timezone,
     fromDate: fromDate.toISOString(),
-    fromDateKST: new Date(fromDate.getTime() + 3 * 60 * 60 * 1000).toISOString() // +3 hours offset
+    fromDateKST: new Date(fromDate.getTime() + 1.5 * 60 * 60 * 1000).toISOString() // +1.5 hours offset
   })
   
   // 시간 간격 기반 스케줄링 (hourly, 3hours, 6hours)
@@ -104,8 +104,8 @@ export function calculateNextRun(
     return next
   }
   
-  // 한국 시간대로 변환해서 계산 (+3시간 보정)
-  const koreaOffsetMs = 3 * 60 * 60 * 1000 // +3 hours offset
+  // 한국 시간대로 변환해서 계산 (+1시간 30분 보정)
+  const koreaOffsetMs = 1.5 * 60 * 60 * 1000 // +1.5 hours offset
   const nowInKorea = new Date(fromDate.getTime() + koreaOffsetMs)
   
   // 한국 시간 기준으로 목표 시간 설정

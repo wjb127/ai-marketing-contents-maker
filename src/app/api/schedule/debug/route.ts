@@ -7,9 +7,9 @@ export async function GET() {
   try {
     const supabase = await createClient()
     
-    // 현재 시간 정보 (+3시간 보정)
+    // 현재 시간 정보 (+1시간 30분 보정)
     const now = new Date()
-    const nowKST = new Date(now.getTime() + 3 * 60 * 60 * 1000)
+    const nowKST = new Date(now.getTime() + 1.5 * 60 * 60 * 1000)
     
     // 모든 스케줄 조회
     const { data: schedules, error } = await supabase
@@ -31,7 +31,7 @@ export async function GET() {
           schedule.time_of_day,
           schedule.timezone || 'Asia/Seoul'
         )
-        nextRunKST = new Date(nextRun.getTime() + 3 * 60 * 60 * 1000)
+        nextRunKST = new Date(nextRun.getTime() + 1.5 * 60 * 60 * 1000)
       } catch (error) {
         console.error(`Error calculating next run for schedule ${schedule.id}:`, error)
       }
