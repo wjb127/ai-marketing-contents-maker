@@ -54,6 +54,8 @@ import { usePrompts } from '@/hooks/usePrompts'
 import { useContents } from '@/hooks/useContents'
 import { PLAN_LIMITS, CONTENT_TYPE_LABELS, TONE_LABELS, FREQUENCY_LABELS } from '@/utils/constants'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { ScheduleCountdown } from '@/components/schedule/ScheduleCountdown'
+import { GlobalClock } from '@/components/schedule/GlobalClock'
 
 
 export default function SchedulePage() {
@@ -509,6 +511,7 @@ export default function SchedulePage() {
               <Text color="gray.600" fontSize="lg">
                 자동 콘텐츠 생성 스케줄을 관리하세요 (한국시간 KST 기준)
               </Text>
+              <GlobalClock />
             </VStack>
             
             <HStack spacing={3}>
@@ -656,12 +659,6 @@ export default function SchedulePage() {
                               <strong>주제:</strong> {schedule.topics?.[0] || schedule.topic || ''}
                             </Text>
                             <Text fontSize="sm" color="gray.600">
-                              <strong>빈도:</strong> {schedule.frequency}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              <strong>시간:</strong> {schedule.time_of_day}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
                               <strong>생성 횟수:</strong> {schedule.total_generated || 0}회
                             </Text>
                             {schedule.last_run_at && (
@@ -669,6 +666,13 @@ export default function SchedulePage() {
                                 마지막 실행: {formatDate(schedule.last_run_at, 'datetime')}
                               </Text>
                             )}
+                            <Divider my={2} />
+                            <ScheduleCountdown
+                              nextRunAt={schedule.next_run_at}
+                              frequency={schedule.frequency}
+                              timeOfDay={schedule.time_of_day}
+                              isActive={schedule.is_active}
+                            />
                             <VStack spacing={2} width="full">
                               <Button
                                 size="sm"
