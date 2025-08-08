@@ -192,6 +192,21 @@ async function handler(request: NextRequest) {
       })
       .eq('id', scheduleId)
 
+    // 테스트 대시보드에 실행 기록 추가
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_URL?.trim()}/api/test/time-logger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scheduleId: scheduleId,
+          timestamp: new Date().toISOString()
+        })
+      })
+    } catch (logError) {
+      console.error('Failed to log execution to time-logger:', logError)
+      // 로그 실패해도 메인 기능은 계속 진행
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Content generated successfully',
