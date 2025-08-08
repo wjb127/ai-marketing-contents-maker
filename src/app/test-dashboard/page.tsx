@@ -106,6 +106,42 @@ export default function TestDashboard() {
     }
   }
 
+  // 테스트 스케줄 전체 비활성화
+  const deactivateAllTestSchedules = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/schedule/deactivate-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        toast({
+          title: '테스트 스케줄 비활성화 완료',
+          description: `${data.deactivated}개 스케줄을 비활성화했습니다`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        })
+        // 스케줄 목록 즉시 새로고침
+        fetchSchedules()
+      } else {
+        throw new Error(data.error || 'Unknown error')
+      }
+    } catch (error) {
+      toast({
+        title: '비활성화 실패',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Container maxW="container.lg" py={8}>
       <VStack spacing={6} align="stretch">
@@ -119,16 +155,27 @@ export default function TestDashboard() {
         <Box bg="white" p={6} borderRadius="lg" shadow="md">
           <HStack justify="space-between" mb={4}>
             <Heading size="md">테스트 컨트롤</Heading>
-            <Button 
-              colorScheme="blue" 
-              onClick={createSchedule}
-              isLoading={loading}
-            >
-              1분 후 실행될 스케줄 생성
-            </Button>
+            <HStack spacing={3}>
+              <Button 
+                colorScheme="red" 
+                variant="outline"
+                onClick={deactivateAllTestSchedules}
+                isLoading={loading}
+                size="sm"
+              >
+                🛑 모든 테스트 스케줄 비활성화
+              </Button>
+              <Button 
+                colorScheme="blue" 
+                onClick={createSchedule}
+                isLoading={loading}
+              >
+                1분 후 실행될 스케줄 생성
+              </Button>
+            </HStack>
           </HStack>
           <Text color="gray.600">
-            버튼을 클릭하면 1분 후에 실행될 스케줄이 생성됩니다.
+            버튼을 클릭하면 1분 후에 실행될 스케줄이 생성됩니다. 비활성화 버튼으로 모든 테스트 스케줄을 한번에 정리할 수 있습니다.
           </Text>
         </Box>
 
