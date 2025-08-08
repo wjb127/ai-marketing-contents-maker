@@ -96,19 +96,15 @@ export async function cancelScheduledGeneration(messageId: string) {
 // 다음 실행 시간 계산 (한국 시간대 지원)
 export function calculateNextRun(
   frequency: 'daily' | 'weekly' | 'monthly' | 'hourly' | '3hours' | '6hours',
-  timeOfDay: string, // HH:mm format
+  timeOfDay: string, // HH:mm format in KST
   timezone: string = 'Asia/Seoul',
   fromDate: Date = new Date()
 ): Date {
-  // 한국 시간대 오프셋 설정 (UTC+9 + 1초 보정)
-  const koreaOffsetMs = (9 * 60 * 60 * 1000) + 1000 // UTC+9 + 1 second
-  
   console.log('🕐 Calculating next run:', {
     frequency,
     timeOfDay,
     timezone,
     fromDate: fromDate.toISOString(),
-    fromDateKST: new Date(fromDate.getTime() + koreaOffsetMs).toISOString() // KST+1s offset
   })
   
   // 시간 간격 기반 스케줄링 (hourly, 3hours, 6hours)
@@ -119,8 +115,9 @@ export function calculateNextRun(
     return next
   }
   
-  // 한국 시간대로 변환해서 계산
-  const nowInKorea = new Date(fromDate.getTime() + koreaOffsetMs)
+  // 입력된 timeOfDay를 KST로 해석
+  // 현재 시간을 KST로 변환
+  const nowInKorea = new Date(fromDate.getTime() + (9 * 60 * 60 * 1000) + 1000)
   
   // 한국 시간 기준으로 목표 시간 설정
   const [hours, minutes] = timeOfDay.split(':').map(Number)
@@ -142,14 +139,14 @@ export function calculateNextRun(
     }
   }
   
-  // 다시 UTC로 변환
-  const nextRunUTC = new Date(targetInKorea.getTime() - koreaOffsetMs)
+  // KST에서 UTC로 변환 (9시간 빼기)
+  const nextRunUTC = new Date(targetInKorea.getTime() - (9 * 60 * 60 * 1000) - 1000)
   
   console.log('🎯 Final next run calculation:', {
     nowInKorea: nowInKorea.toISOString(),
     targetInKorea: targetInKorea.toISOString(), 
     nextRunUTC: nextRunUTC.toISOString(),
-    nextRunKST: new Date(nextRunUTC.getTime() + koreaOffsetMs).toISOString()
+    inputTimeAsKST: `${timeOfDay} KST`
   })
   
   return nextRunUTC

@@ -57,9 +57,8 @@ export async function PUT(request: NextRequest) {
       
       nextRun = calculateNextRun(newFrequency, newTimeOfDay, newTimezone)
       
-      // KST로 변환해서 로그 출력 (UTC+9 + 1초 보정)
-      const koreaOffsetMs = (9 * 60 * 60 * 1000) + 1000 // UTC+9 + 1 second
-      const nextRunKST = new Date(nextRun.getTime() + koreaOffsetMs)
+      // KST로 변환해서 로그 출력 (+1초 보정)
+      const nextRunKST = new Date(nextRun.getTime() + 1000)
       console.log('📅 New next run scheduled:', {
         utc: nextRun.toISOString(),
         kst: nextRunKST.toISOString(),

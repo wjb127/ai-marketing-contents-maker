@@ -28,9 +28,8 @@ export const GlobalClock: React.FC = () => {
     )
   }
 
-  // 한국 시간으로 변환 (UTC+9 + 1초 보정)
-  const koreaOffsetMs = (9 * 60 * 60 * 1000) + 1000 // UTC+9 + 1 second
-  const nowKST = new Date(currentTime.getTime() + koreaOffsetMs)
+  // 한국 시간으로 변환 (+1초 보정)
+  const nowKST = new Date(currentTime.getTime() + 1000)
   
   const formatCurrentTime = (date: Date) => {
     return date.toLocaleString('ko-KR', {
