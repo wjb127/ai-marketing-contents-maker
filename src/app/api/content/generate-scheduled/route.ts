@@ -113,10 +113,10 @@ async function handler(request: NextRequest) {
       // 자동 프롬프트 사용
       prompt = getScheduledPromptTemplate(
         schedule.content_type,
-        schedule.content_tone,
-        schedule.topics?.[0] || '',
-        schedule.target_audience,
-        schedule.additional_instructions
+        schedule.content_tone || 'casual',
+        schedule.topics?.[0] || schedule.topic || '일반 주제',
+        schedule.target_audience || '',
+        schedule.additional_instructions || ''
       )
     }
 
@@ -147,10 +147,10 @@ async function handler(request: NextRequest) {
       .from('contents')
       .insert({
         user_id: schedule.user_id,
-        title: `${schedule.name} - 자동 생성 콘텐츠`,
+        title: `${schedule.name || 'Untitled'} - 자동 생성 콘텐츠`,
         content_type: schedule.content_type,
-        tone: schedule.content_tone,
-        topic: schedule.topics?.[0] || '',
+        tone: schedule.content_tone || 'casual',
+        topic: schedule.topics?.[0] || schedule.topic || '일반 주제',
         content: generatedContent,
         status: 'draft',
         schedule_id: scheduleId
@@ -178,7 +178,7 @@ async function handler(request: NextRequest) {
       const { error: usageUpdateError } = await supabase
         .from('users')
         .update({ 
-          monthly_content_count: user.monthly_content_count + 1 
+          monthly_content_count: (user.monthly_content_count || 0) + 1 
         })
         .eq('id', schedule.user_id)
       
@@ -207,9 +207,9 @@ async function handler(request: NextRequest) {
 
     // 다음 실행 예약
     const nextRun = calculateNextRun(
-      schedule.frequency,
-      schedule.time_of_day,
-      schedule.timezone
+      schedule.frequency || 'daily',
+      schedule.time_of_day || '09:00:00',
+      schedule.timezone || 'Asia/Seoul'
     )
 
     let messageId: string | null = null
@@ -229,7 +229,7 @@ async function handler(request: NextRequest) {
         .from('schedules')
         .update({ 
           next_run_at: nextRun.toISOString(),
-          qstash_message_id: messageId
+          qstash_message_id: messageId || null
         })
         .eq('id', scheduleId)
       
