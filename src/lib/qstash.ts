@@ -26,7 +26,7 @@ if (typeof window === 'undefined') { // 서버 사이드에서만 실행
   console.log('- QStash configured:', isQStashConfigured())
   
   if (isQStashConfigured()) {
-    console.log('- Target URL:', `${process.env.NEXT_PUBLIC_URL}/api/content/generate-scheduled`)
+    console.log('- Target URL:', `${process.env.NEXT_PUBLIC_URL}/api/content/generate-scheduled-v2`)
   } else {
     console.log('⚠️ QStash is not fully configured - schedules will be created but not executed automatically')
   }

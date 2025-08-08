@@ -26,14 +26,16 @@ async function handler(request: NextRequest) {
     
     // 2. 스케줄 조회 - 단순한 구조
     const supabase = await createClient()
-    const scheduleQuery = await supabase
-      .from('schedules')
-      .select('*')
-      .eq('id', scheduleId)
-      .single()
-      .catch(e => {
-        throw new Error(`Schedule query failed: ${e.message}`)
-      })
+    let scheduleQuery
+    try {
+      scheduleQuery = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('id', scheduleId)
+        .single()
+    } catch (e: any) {
+      throw new Error(`Schedule query failed: ${e.message}`)
+    }
     
     if (scheduleQuery.error || !scheduleQuery.data) {
       throw new Error(`Schedule not found: ${scheduleQuery.error?.message}`)
@@ -43,14 +45,16 @@ async function handler(request: NextRequest) {
     console.log('✅ Schedule found:', schedule.name)
     
     // 3. 사용자 조회
-    const userQuery = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', schedule.user_id)
-      .single()
-      .catch(e => {
-        throw new Error(`User query failed: ${e.message}`)
-      })
+    let userQuery
+    try {
+      userQuery = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', schedule.user_id)
+        .single()
+    } catch (e: any) {
+      throw new Error(`User query failed: ${e.message}`)
+    }
     
     if (userQuery.error || !userQuery.data) {
       throw new Error(`User not found: ${userQuery.error?.message}`)
