@@ -41,7 +41,7 @@ export async function scheduleContentGeneration(
     throw new Error('QStash is not configured. Please set QSTASH_TOKEN and NEXT_PUBLIC_URL')
   }
 
-  const url = `${process.env.NEXT_PUBLIC_URL?.trim()}/api/content/generate-scheduled`
+  const url = `${process.env.NEXT_PUBLIC_URL?.trim()}/api/content/generate-scheduled-v2`
   
   console.log('Scheduling content generation:', {
     scheduleId,
