@@ -11,13 +11,12 @@ export async function POST(request: NextRequest) {
     const { scheduleId, timestamp } = body
     
     const now = new Date()
-    const nowKST = new Date(now.getTime() + 9 * 60 * 60 * 1000)
     
     const logEntry = {
       scheduleId,
       executedAt: now.toISOString(),
-      executedAtKST: nowKST.toISOString(),
-      readableKST: nowKST.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+      executedAtKST: now.toISOString(), // UTC 시간 그대로 저장
+      readableKST: now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }), // 표시할 때만 KST로 변환
       timestamp: timestamp || now.toISOString(),
       message: '✅ 스케줄이 실행되었습니다!'
     }
@@ -61,10 +60,11 @@ export async function POST(request: NextRequest) {
 
 // 실행 로그 조회
 export async function GET() {
+  const now = new Date()
   return NextResponse.json({
     message: '시간 기록 API',
-    currentTime: new Date().toISOString(),
-    currentTimeKST: new Date(Date.now() + 9 * 60 * 60 * 1000).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+    currentTime: now.toISOString(),
+    currentTimeKST: now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
     recentExecutions: executionLogs,
     totalExecutions: executionLogs.length
   })

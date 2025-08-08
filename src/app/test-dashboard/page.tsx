@@ -13,8 +13,7 @@ export default function TestDashboard() {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date()
-      const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
-      setCurrentTime(kst.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }))
+      setCurrentTime(now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }))
     }, 1000)
     return () => clearInterval(timer)
   }, [])
@@ -43,8 +42,14 @@ export default function TestDashboard() {
     try {
       const now = new Date()
       const oneMinuteLater = new Date(now.getTime() + 60 * 1000)
-      const kstTime = new Date(oneMinuteLater.getTime() + 9 * 60 * 60 * 1000)
-      const timeString = `${kstTime.getHours().toString().padStart(2, '0')}:${kstTime.getMinutes().toString().padStart(2, '0')}`
+      // KST 시간을 얻기 위해 toLocaleString 사용
+      const kstTimeString = oneMinuteLater.toLocaleTimeString('ko-KR', { 
+        timeZone: 'Asia/Seoul',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+      const timeString = kstTimeString.substring(0, 5) // "HH:MM" 형식
       
       const res = await fetch('/api/schedule/create', {
         method: 'POST',
