@@ -84,74 +84,106 @@ export default function HomePage() {
             </HStack>
           </VStack>
 
-          {/* Features */}
-          <SimpleGrid 
-            columns={{ base: 1, md: 3 }} 
-            spacing={{ base: 6, md: 8 }} 
-            w="full" 
-            maxW="4xl"
-            px={{ base: 4, md: 0 }}
-          >
-            <Card 
-              shadow={{ base: "md", md: "lg" }}
-              transition="all 0.2s"
-              _hover={{ transform: "translateY(-2px)", shadow: "xl" }}
+          {/* Features - Mobile Horizontal Scroll */}
+          <Box w="full" overflow="auto" pb={2}>
+            <HStack 
+              spacing={3}
+              align="stretch"
+              minW={{ base: "max-content", md: "auto" }}
+              justify={{ base: "flex-start", md: "center" }}
+              px={{ base: 4, md: 0 }}
             >
-              <CardBody textAlign="center" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
-                <Text fontSize={{ base: "2xl", md: "3xl" }} mb={{ base: 3, md: 4 }}>🤖</Text>
-                <Heading size={{ base: "sm", md: "md" }} mb={{ base: 2, md: 3 }}>
-                  AI 자동 생성
-                </Heading>
-                <Text 
-                  color="gray.600" 
-                  fontSize={{ base: "sm", md: "md" }}
-                  lineHeight={{ base: "1.5", md: "1.4" }}
+              {/* AI 자동 생성 */}
+              <Card 
+                minW={{ base: "100px", md: "280px" }}
+                maxW={{ base: "100px", md: "280px" }}
+                shadow="sm"
+                borderRadius="lg"
+              >
+                <CardBody 
+                  textAlign="center" 
+                  py={{ base: 3, md: 6 }} 
+                  px={{ base: 2, md: 4 }}
                 >
-                  주제만 입력하면 AI가 트위터, 인스타그램, 링크드인 등 다양한 플랫폼에 맞는 콘텐츠를 생성합니다.
-                </Text>
-              </CardBody>
-            </Card>
+                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>🤖</Text>
+                  <Text 
+                    fontSize={{ base: "xs", md: "md" }}
+                    fontWeight="bold"
+                    mb={{ base: 1, md: 2 }}
+                  >
+                    AI 생성
+                  </Text>
+                  <Text 
+                    color="gray.600" 
+                    fontSize={{ base: "2xs", md: "sm" }}
+                    display={{ base: "none", md: "block" }}
+                  >
+                    주제만 입력하면 다양한 SNS 콘텐츠 자동 생성
+                  </Text>
+                </CardBody>
+              </Card>
 
-            <Card 
-              shadow={{ base: "md", md: "lg" }}
-              transition="all 0.2s"
-              _hover={{ transform: "translateY(-2px)", shadow: "xl" }}
-            >
-              <CardBody textAlign="center" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
-                <Text fontSize={{ base: "2xl", md: "3xl" }} mb={{ base: 3, md: 4 }}>⏰</Text>
-                <Heading size={{ base: "sm", md: "md" }} mb={{ base: 2, md: 3 }}>
-                  자동 스케줄링
-                </Heading>
-                <Text 
-                  color="gray.600" 
-                  fontSize={{ base: "sm", md: "md" }}
-                  lineHeight={{ base: "1.5", md: "1.4" }}
+              {/* 자동 스케줄링 */}
+              <Card 
+                minW={{ base: "100px", md: "280px" }}
+                maxW={{ base: "100px", md: "280px" }}
+                shadow="sm"
+                borderRadius="lg"
+              >
+                <CardBody 
+                  textAlign="center" 
+                  py={{ base: 3, md: 6 }} 
+                  px={{ base: 2, md: 4 }}
                 >
-                  원하는 시간에 자동으로 콘텐츠가 생성되고 준비됩니다. 매일, 매주 등 주기를 설정할 수 있어요.
-                </Text>
-              </CardBody>
-            </Card>
+                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>⏰</Text>
+                  <Text 
+                    fontSize={{ base: "xs", md: "md" }}
+                    fontWeight="bold"
+                    mb={{ base: 1, md: 2 }}
+                  >
+                    스케줄링
+                  </Text>
+                  <Text 
+                    color="gray.600" 
+                    fontSize={{ base: "2xs", md: "sm" }}
+                    display={{ base: "none", md: "block" }}
+                  >
+                    원하는 시간에 자동으로 콘텐츠 생성
+                  </Text>
+                </CardBody>
+              </Card>
 
-            <Card 
-              shadow={{ base: "md", md: "lg" }}
-              transition="all 0.2s"
-              _hover={{ transform: "translateY(-2px)", shadow: "xl" }}
-            >
-              <CardBody textAlign="center" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
-                <Text fontSize={{ base: "2xl", md: "3xl" }} mb={{ base: 3, md: 4 }}>🎨</Text>
-                <Heading size={{ base: "sm", md: "md" }} mb={{ base: 2, md: 3 }}>
-                  창의성 조절
-                </Heading>
-                <Text 
-                  color="gray.600" 
-                  fontSize={{ base: "sm", md: "md" }}
-                  lineHeight={{ base: "1.5", md: "1.4" }}
+              {/* 창의성 조절 */}
+              <Card 
+                minW={{ base: "100px", md: "280px" }}
+                maxW={{ base: "100px", md: "280px" }}
+                shadow="sm"
+                borderRadius="lg"
+              >
+                <CardBody 
+                  textAlign="center" 
+                  py={{ base: 3, md: 6 }} 
+                  px={{ base: 2, md: 4 }}
                 >
-                  보수적부터 실험적까지 4단계 창의성 레벨로 콘텐츠의 다양성과 독창성을 조절할 수 있습니다.
-                </Text>
-              </CardBody>
-            </Card>
-          </SimpleGrid>
+                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>🎨</Text>
+                  <Text 
+                    fontSize={{ base: "xs", md: "md" }}
+                    fontWeight="bold"
+                    mb={{ base: 1, md: 2 }}
+                  >
+                    창의성
+                  </Text>
+                  <Text 
+                    color="gray.600" 
+                    fontSize={{ base: "2xs", md: "sm" }}
+                    display={{ base: "none", md: "block" }}
+                  >
+                    4단계 레벨로 콘텐츠 다양성 조절
+                  </Text>
+                </CardBody>
+              </Card>
+            </HStack>
+          </Box>
         </VStack>
       </Container>
     </Layout>
