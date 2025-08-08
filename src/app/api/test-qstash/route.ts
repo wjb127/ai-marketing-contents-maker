@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     console.log('🧪 Testing QStash scheduling:', {
       scheduleId,
       executeAt: executeAt.toISOString(),
-      executeAtKST: new Date(executeAt.getTime() + 1000).toISOString()
+      executeAtKST: new Date(executeAt.getTime() + (9 * 60 * 60 * 1000) + 1000).toISOString() // UTC+9 + 1s
     })
 
     const messageId = await scheduleContentGeneration(scheduleId, executeAt)
