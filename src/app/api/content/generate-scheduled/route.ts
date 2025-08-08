@@ -8,20 +8,29 @@ import { evaluateAndSaveContent } from '@/lib/evaluation'
 import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 async function handler(request: NextRequest) {
+  let body: any
+  let scheduleId: string
+  
   try {
-    const body = await request.json()
-    const { scheduleId } = body
+    console.log('🚀 Generate-scheduled API called')
+    body = await request.json()
+    console.log('📥 Request body:', body)
+    
+    scheduleId = body.scheduleId
 
     if (!scheduleId) {
+      console.error('❌ No scheduleId provided')
       return NextResponse.json(
         { error: 'Schedule ID is required' },
         { status: 400 }
       )
     }
 
+    console.log('🔍 Processing schedule:', scheduleId)
     const supabase = await createClient()
 
     // 스케줄 정보 조회
+    console.log('🔎 Querying schedule from database...')
     const { data: schedule, error: scheduleError } = await supabase
       .from('schedules')
       .select('*')
@@ -29,12 +38,14 @@ async function handler(request: NextRequest) {
       .single()
 
     if (scheduleError || !schedule) {
-      console.error('Schedule not found:', scheduleError)
+      console.error('❌ Schedule not found:', scheduleError)
       return NextResponse.json(
-        { error: 'Schedule not found' },
+        { error: 'Schedule not found', details: scheduleError?.message || JSON.stringify(scheduleError) },
         { status: 404 }
       )
     }
+
+    console.log('✅ Schedule found:', schedule.name)
 
     // 스케줄이 비활성화된 경우 중단
     if (!schedule.is_active) {
@@ -146,7 +157,7 @@ async function handler(request: NextRequest) {
 
     if (contentError || !savedContent) {
       console.error('Failed to save content:', contentError)
-      throw contentError
+      throw new Error(`Failed to save content: ${contentError?.message || JSON.stringify(contentError)}`)
     }
 
     // 자동 평가 수행 (백그라운드에서 실행)
@@ -194,7 +205,11 @@ async function handler(request: NextRequest) {
 
     // 테스트 대시보드에 실행 기록 추가
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_URL?.trim()}/api/test/time-logger`, {
+      console.log('🕐 Logging execution to time-logger...')
+      const loggerUrl = `${process.env.NEXT_PUBLIC_URL?.trim()}/api/test/time-logger`
+      console.log('📍 Logger URL:', loggerUrl)
+      
+      const logResponse = await fetch(loggerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,8 +217,14 @@ async function handler(request: NextRequest) {
           timestamp: new Date().toISOString()
         })
       })
-    } catch (logError) {
-      console.error('Failed to log execution to time-logger:', logError)
+      
+      const logResult = await logResponse.json()
+      console.log('✅ Time-logger response:', logResult)
+    } catch (logError: any) {
+      console.error('Failed to log execution to time-logger:', {
+        message: logError?.message || 'Unknown log error',
+        error: logError
+      })
       // 로그 실패해도 메인 기능은 계속 진행
     }
 
@@ -213,24 +234,41 @@ async function handler(request: NextRequest) {
       nextRun: nextRun.toISOString()
     })
 
-  } catch (error) {
-    console.error('Scheduled generation error:', error)
+  } catch (error: any) {
+    console.error('❌ Scheduled generation error:', {
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace',
+      errorType: typeof error,
+      errorName: error?.name,
+      fullError: JSON.stringify(error, null, 2)
+    })
     
     // 실패 로그를 데이터베이스에 기록 (옵션)
     try {
-      const supabase = await createClient()
-      await supabase
-        .from('schedules')
-        .update({ 
-          last_run_at: new Date().toISOString()
-        })
-        .eq('id', body?.scheduleId)
-    } catch (dbError) {
-      console.error('Failed to update schedule after error:', dbError)
+      if (scheduleId) {
+        const supabase = await createClient()
+        const updateResult = await supabase
+          .from('schedules')
+          .update({ 
+            last_run_at: new Date().toISOString()
+          })
+          .eq('id', scheduleId)
+        
+        if (updateResult.error) {
+          console.error('DB update error after failure:', updateResult.error)
+        }
+      }
+    } catch (dbError: any) {
+      console.error('Failed to update schedule after error:', {
+        message: dbError?.message || 'Unknown DB error',
+        error: dbError
+      })
     }
     
+    const errorMessage = error?.message || error?.toString() || 'Unknown error occurred'
+    
     return NextResponse.json(
-      { error: 'Failed to generate scheduled content', details: error.message },
+      { error: 'Failed to generate scheduled content', details: errorMessage },
       { status: 500 }
     )
   }
