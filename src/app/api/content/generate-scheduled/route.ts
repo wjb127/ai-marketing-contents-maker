@@ -13,8 +13,18 @@ async function handler(request: NextRequest) {
   
   try {
     console.log('🚀 Generate-scheduled API called')
-    body = await request.json()
-    console.log('📥 Request body:', body)
+    
+    // Request body 안전하게 파싱
+    try {
+      body = await request.json()
+      console.log('📥 Request body:', body)
+    } catch (bodyError: any) {
+      console.error('❌ Failed to parse request body:', bodyError)
+      return NextResponse.json(
+        { error: 'Invalid request body', details: bodyError?.message || 'Unknown parsing error' },
+        { status: 400 }
+      )
+    }
     
     scheduleId = body.scheduleId
 
@@ -29,23 +39,37 @@ async function handler(request: NextRequest) {
     console.log('🔍 Processing schedule:', scheduleId)
     const supabase = await createClient()
 
-    // 스케줄 정보 조회
+    // 스케줄 정보 조회 - 완전 격리
     console.log('🔎 Querying schedule from database...')
-    const { data: schedule, error: scheduleError } = await supabase
-      .from('schedules')
-      .select('*')
-      .eq('id', scheduleId)
-      .single()
-
-    if (scheduleError || !schedule) {
-      console.error('❌ Schedule not found:', scheduleError)
+    let schedule: any = null
+    try {
+      const scheduleResult = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('id', scheduleId)
+        .single()
+      
+      if (scheduleResult.error) {
+        throw new Error(`Schedule query failed: ${scheduleResult.error.message}`)
+      }
+      
+      schedule = scheduleResult.data
+      if (!schedule) {
+        throw new Error('Schedule not found in database')
+      }
+      
+      console.log('✅ Schedule found:', schedule.name)
+    } catch (scheduleError: any) {
+      console.error('❌ Schedule lookup error:', {
+        message: scheduleError?.message || 'Unknown schedule error',
+        scheduleId,
+        error: scheduleError
+      })
       return NextResponse.json(
-        { error: 'Schedule not found', details: scheduleError?.message || JSON.stringify(scheduleError) },
+        { error: 'Failed to find schedule', details: scheduleError?.message || 'Schedule lookup failed' },
         { status: 404 }
       )
     }
-
-    console.log('✅ Schedule found:', schedule.name)
 
     // 스케줄이 비활성화된 경우 중단
     if (!schedule.is_active) {
@@ -53,17 +77,31 @@ async function handler(request: NextRequest) {
       return NextResponse.json({ message: 'Schedule is inactive' })
     }
 
-    // 사용자 정보 및 구독 상태 확인
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', schedule.user_id)
-      .single()
-
-    if (userError || !user) {
-      console.error('User not found:', userError)
+    // 사용자 정보 조회 - 완전 격리
+    let user: any = null
+    try {
+      const userResult = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', schedule.user_id)
+        .single()
+      
+      if (userResult.error) {
+        throw new Error(`User query failed: ${userResult.error.message}`)
+      }
+      
+      user = userResult.data
+      if (!user) {
+        throw new Error('User not found in database')
+      }
+    } catch (userError: any) {
+      console.error('User lookup error:', {
+        message: userError?.message || 'Unknown user error',
+        userId: schedule.user_id,
+        error: userError
+      })
       return NextResponse.json(
-        { error: 'User not found', details: userError?.message || JSON.stringify(userError) },
+        { error: 'Failed to find user', details: userError?.message || 'User lookup failed' },
         { status: 404 }
       )
     }
