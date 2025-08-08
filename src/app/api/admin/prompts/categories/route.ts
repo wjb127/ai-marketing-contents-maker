@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 
 // GET: 프롬프트 카테고리 목록 조회
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: categories, error } = await supabase
       .from('prompt_categories')

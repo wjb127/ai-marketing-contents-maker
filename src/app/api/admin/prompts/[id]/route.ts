@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 
 // GET: 특정 프롬프트 템플릿 조회
 export async function GET(
@@ -8,7 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: template, error } = await supabase
       .from('system_prompt_templates')
@@ -51,7 +50,7 @@ export async function PUT(
       is_active
     } = body
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: updatedTemplate, error } = await supabase
       .from('system_prompt_templates')
@@ -87,7 +86,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     // 실제로는 삭제하지 않고 비활성화
     const { data: deactivatedTemplate, error } = await supabase

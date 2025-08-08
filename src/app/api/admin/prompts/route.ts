@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 
 // GET: 프롬프트 템플릿 목록 조회
 export async function GET(request: NextRequest) {
@@ -9,7 +8,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const active_only = searchParams.get('active_only') === 'true'
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     let query = supabase
       .from('system_prompt_templates')
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     // 새 버전 번호 계산
     const { data: existingVersions, error: versionError } = await supabase

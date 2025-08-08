@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@/lib/supabase'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase-server'
 
 // GET: 활성 프롬프트 템플릿 조회 (콘텐츠 생성에서 사용)
 export async function GET(request: NextRequest) {
@@ -12,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'template name은 필수입니다.' }, { status: 400 })
     }
 
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
 
     const { data: template, error } = await supabase
       .from('system_prompt_templates')
