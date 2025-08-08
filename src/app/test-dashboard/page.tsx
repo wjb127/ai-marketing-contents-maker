@@ -6,6 +6,7 @@ import { Box, Button, VStack, HStack, Text, Badge, Heading, Container, Code, use
 export default function TestDashboard() {
   const [currentTime, setCurrentTime] = useState('')
   const [executions, setExecutions] = useState<any[]>([])
+  const [schedules, setSchedules] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const toast = useToast()
 
@@ -29,10 +30,25 @@ export default function TestDashboard() {
     }
   }
 
+  // 테스트 스케줄 조회
+  const fetchSchedules = async () => {
+    try {
+      const res = await fetch('/api/test/schedules')
+      const data = await res.json()
+      setSchedules(data.schedules || [])
+    } catch (error) {
+      console.error('Failed to fetch schedules:', error)
+    }
+  }
+
   // 자동 새로고침
   useEffect(() => {
     fetchExecutions()
-    const interval = setInterval(fetchExecutions, 5000) // 5초마다
+    fetchSchedules()
+    const interval = setInterval(() => {
+      fetchExecutions()
+      fetchSchedules()
+    }, 5000) // 5초마다
     return () => clearInterval(interval)
   }, [])
 
@@ -76,6 +92,9 @@ export default function TestDashboard() {
         duration: 5000,
         isClosable: true,
       })
+      
+      // 스케줄 목록 즉시 새로고침
+      fetchSchedules()
     } catch (error) {
       toast({
         title: '스케줄 생성 실패',
@@ -113,9 +132,48 @@ export default function TestDashboard() {
           </Text>
         </Box>
 
+        {/* 등록된 테스트 스케줄 */}
         <Box bg="white" p={6} borderRadius="lg" shadow="md">
           <HStack justify="space-between" mb={4}>
-            <Heading size="md">최근 실행 기록</Heading>
+            <Heading size="md">📅 등록된 테스트 스케줄</Heading>
+            <Badge colorScheme={schedules.length > 0 ? 'blue' : 'gray'}>
+              {schedules.length}개
+            </Badge>
+          </HStack>
+          
+          {schedules.length === 0 ? (
+            <Text color="gray.500">등록된 테스트 스케줄이 없습니다...</Text>
+          ) : (
+            <VStack align="stretch" spacing={3}>
+              {schedules.map((schedule, idx) => (
+                <Box key={idx} p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+                  <HStack justify="space-between">
+                    <VStack align="start" spacing={1}>
+                      <Text fontWeight="bold">{schedule.name}</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        다음 실행: {new Date(schedule.next_run_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        생성: {new Date(schedule.created_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+                      </Text>
+                    </VStack>
+                    <VStack align="end" spacing={1}>
+                      <Code fontSize="xs">{schedule.id?.slice(0, 8)}...</Code>
+                      <Badge colorScheme={schedule.is_active ? 'green' : 'red'} size="sm">
+                        {schedule.is_active ? '활성' : '비활성'}
+                      </Badge>
+                    </VStack>
+                  </HStack>
+                </Box>
+              ))}
+            </VStack>
+          )}
+        </Box>
+
+        {/* 실행된 스케줄 기록 */}
+        <Box bg="white" p={6} borderRadius="lg" shadow="md">
+          <HStack justify="space-between" mb={4}>
+            <Heading size="md">✅ 실행된 스케줄 기록</Heading>
             <Badge colorScheme={executions.length > 0 ? 'green' : 'gray'}>
               {executions.length}개
             </Badge>
@@ -126,7 +184,7 @@ export default function TestDashboard() {
           ) : (
             <VStack align="stretch" spacing={3}>
               {executions.map((exec, idx) => (
-                <Box key={idx} p={3} bg="gray.50" borderRadius="md">
+                <Box key={idx} p={3} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.200">
                   <HStack justify="space-between">
                     <VStack align="start" spacing={1}>
                       <Text fontWeight="bold">{exec.message}</Text>
@@ -134,7 +192,7 @@ export default function TestDashboard() {
                         실행 시간: {exec.readableKST}
                       </Text>
                     </VStack>
-                    <Code>{exec.scheduleId?.slice(0, 8)}...</Code>
+                    <Code fontSize="xs">{exec.scheduleId?.slice(0, 8)}...</Code>
                   </HStack>
                 </Box>
               ))}
