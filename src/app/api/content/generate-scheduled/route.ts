@@ -125,22 +125,31 @@ async function handler(request: NextRequest) {
       ? CREATIVITY_LEVELS[schedule.creativity_level as keyof typeof CREATIVITY_LEVELS]
       : CREATIVITY_LEVELS.balanced
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      temperature: creativitySettings.temperature,
-      top_p: creativitySettings.top_p,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    })
+    let generatedContent = ''
+    try {
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        temperature: creativitySettings.temperature,
+        top_p: creativitySettings.top_p,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
 
-    const generatedContent = message.content[0]?.type === 'text' 
-      ? message.content[0].text 
-      : ''
+      generatedContent = message.content[0]?.type === 'text' 
+        ? message.content[0].text 
+        : '콘텐츠 생성 중 오류가 발생했습니다.'
+    } catch (anthropicError: any) {
+      console.error('Anthropic API error:', {
+        message: anthropicError?.message || 'Unknown Anthropic error',
+        error: anthropicError
+      })
+      generatedContent = '콘텐츠 생성 중 오류가 발생했습니다. 다시 시도해주세요.'
+    }
 
     // 콘텐츠 저장 (dogfooding 환경에 맞게 수정)
     const { data: savedContent, error: contentError } = await supabase
@@ -168,8 +177,12 @@ async function handler(request: NextRequest) {
     try {
       await evaluateAndSaveContent(savedContent.id)
       console.log('Scheduled content evaluation completed for:', savedContent.id)
-    } catch (evaluationError) {
-      console.error('Failed to evaluate scheduled content automatically:', evaluationError)
+    } catch (evaluationError: any) {
+      console.error('Failed to evaluate scheduled content automatically:', {
+        message: evaluationError?.message || 'Unknown evaluation error',
+        contentId: savedContent.id,
+        error: evaluationError
+      })
       // 평가 실패해도 콘텐츠 생성은 성공으로 처리
     }
 

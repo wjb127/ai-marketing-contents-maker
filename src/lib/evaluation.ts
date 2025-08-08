@@ -141,7 +141,7 @@ export async function saveEvaluationToDatabase(
 
   if (error) {
     console.error('Failed to save evaluation:', error)
-    throw new Error('Failed to save evaluation results')
+    throw new Error(`Failed to save evaluation results: ${error?.message || JSON.stringify(error)}`)
   }
 }
 
@@ -156,7 +156,7 @@ export async function evaluateAndSaveContent(contentId: string): Promise<Evaluat
     .single()
 
   if (contentError || !content) {
-    throw new Error('Content not found')
+    throw new Error(`Content not found: ${contentError?.message || 'Unknown error'}`)
   }
 
   // 이미 평가된 경우 기존 평가 반환 (JSON에서 파싱)
