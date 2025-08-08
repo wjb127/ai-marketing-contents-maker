@@ -41,7 +41,7 @@ export async function scheduleContentGeneration(
     throw new Error('QStash is not configured. Please set QSTASH_TOKEN and NEXT_PUBLIC_URL')
   }
 
-  const url = `${process.env.NEXT_PUBLIC_URL}/api/content/generate-scheduled`
+  const url = `${process.env.NEXT_PUBLIC_URL?.trim()}/api/content/generate-scheduled`
   
   console.log('Scheduling content generation:', {
     scheduleId,
@@ -124,8 +124,8 @@ export function calculateNextRun(
   const targetInKorea = new Date(nowInKorea)
   targetInKorea.setHours(hours, minutes, 0, 0)
   
-  // 이미 지난 시간이면 다음 주기로
-  if (targetInKorea <= nowInKorea) {
+  // 이미 지난 시간이면 다음 주기로 (2분 여유 시간 추가)
+  if (targetInKorea.getTime() < (nowInKorea.getTime() - 2 * 60 * 1000)) {
     switch (frequency) {
       case 'daily':
         targetInKorea.setDate(targetInKorea.getDate() + 1)
