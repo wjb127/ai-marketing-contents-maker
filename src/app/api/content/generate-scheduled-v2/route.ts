@@ -180,7 +180,11 @@ async function handler(request: NextRequest) {
         schedule.timezone || 'Asia/Seoul'
       )
       
-      const messageId = await scheduleContentGeneration(scheduleId, nextRun)
+      const messageId = await scheduleContentGeneration(
+        scheduleId, 
+        nextRun,
+        schedule.qstash_message_id // 기존 메시지 ID 전달
+      )
       
       await supabase
         .from('schedules')

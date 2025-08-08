@@ -35,10 +35,17 @@ if (typeof window === 'undefined') { // 서버 사이드에서만 실행
 // 스케줄링 헬퍼 함수들
 export async function scheduleContentGeneration(
   scheduleId: string, 
-  executeAt: Date
+  executeAt: Date,
+  existingMessageId?: string // 기존 메시지 ID가 있으면 취소
 ) {
   if (!qstash || !isQStashConfigured()) {
     throw new Error('QStash is not configured. Please set QSTASH_TOKEN and NEXT_PUBLIC_URL')
+  }
+
+  // 기존 QStash 메시지가 있으면 먼저 취소
+  if (existingMessageId) {
+    console.log('🗑️ Cancelling existing QStash message:', existingMessageId)
+    await cancelScheduledGeneration(existingMessageId)
   }
 
   const url = `${process.env.NEXT_PUBLIC_URL?.trim()}/api/content/generate-scheduled-v2`
