@@ -63,7 +63,7 @@ async function handler(request: NextRequest) {
     if (userError || !user) {
       console.error('User not found:', userError)
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'User not found', details: userError?.message || JSON.stringify(userError) },
         { status: 404 }
       )
     }
@@ -73,10 +73,14 @@ async function handler(request: NextRequest) {
       console.log('User subscription inactive:', schedule.user_id)
       
       // 스케줄 비활성화
-      await supabase
+      const { error: deactivateError } = await supabase
         .from('schedules')
         .update({ is_active: false })
         .eq('id', scheduleId)
+      
+      if (deactivateError) {
+        console.error('Failed to deactivate schedule:', deactivateError)
+      }
       
       return NextResponse.json({ 
         message: 'User subscription inactive, schedule disabled' 
@@ -170,20 +174,36 @@ async function handler(request: NextRequest) {
     }
 
     // 사용량 업데이트
-    await supabase
-      .from('users')
-      .update({ 
-        monthly_content_count: user.monthly_content_count + 1 
-      })
-      .eq('id', schedule.user_id)
+    try {
+      const { error: usageUpdateError } = await supabase
+        .from('users')
+        .update({ 
+          monthly_content_count: user.monthly_content_count + 1 
+        })
+        .eq('id', schedule.user_id)
+      
+      if (usageUpdateError) {
+        console.error('Failed to update usage count:', usageUpdateError)
+      }
+    } catch (usageError: any) {
+      console.error('Usage update caught error:', usageError)
+    }
 
     // 마지막 실행 시간 업데이트
-    await supabase
-      .from('schedules')
-      .update({ 
-        last_run_at: new Date().toISOString() 
-      })
-      .eq('id', scheduleId)
+    try {
+      const { error: lastRunUpdateError } = await supabase
+        .from('schedules')
+        .update({ 
+          last_run_at: new Date().toISOString() 
+        })
+        .eq('id', scheduleId)
+      
+      if (lastRunUpdateError) {
+        console.error('Failed to update last run time:', lastRunUpdateError)
+      }
+    } catch (lastRunError: any) {
+      console.error('Last run update caught error:', lastRunError)
+    }
 
     // 다음 실행 예약
     const nextRun = calculateNextRun(
@@ -192,16 +212,33 @@ async function handler(request: NextRequest) {
       schedule.timezone
     )
 
-    const messageId = await scheduleContentGeneration(scheduleId, nextRun)
+    let messageId: string | null = null
+    try {
+      messageId = await scheduleContentGeneration(scheduleId, nextRun)
+    } catch (qstashError: any) {
+      console.error('Failed to schedule next execution:', {
+        message: qstashError?.message || 'Unknown QStash error',
+        error: qstashError
+      })
+      // QStash 실패해도 콘텐츠 생성은 성공으로 처리
+    }
 
     // 다음 실행 시간 저장
-    await supabase
-      .from('schedules')
-      .update({ 
-        next_run_at: nextRun.toISOString(),
-        qstash_message_id: messageId
-      })
-      .eq('id', scheduleId)
+    try {
+      const { error: nextRunUpdateError } = await supabase
+        .from('schedules')
+        .update({ 
+          next_run_at: nextRun.toISOString(),
+          qstash_message_id: messageId
+        })
+        .eq('id', scheduleId)
+      
+      if (nextRunUpdateError) {
+        console.error('Failed to update next run time:', nextRunUpdateError)
+      }
+    } catch (nextRunError: any) {
+      console.error('Next run update caught error:', nextRunError)
+    }
 
     // 테스트 대시보드에 실행 기록 추가
     try {
