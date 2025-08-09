@@ -23,17 +23,45 @@ import {
   Flex,
   Spacer,
 } from '@chakra-ui/react'
-import { ArrowLeftIcon, CopyIcon, CheckIcon, SaveIcon } from '@chakra-ui/icons'
+import { ArrowLeftIcon, CopyIcon, CheckIcon } from '@chakra-ui/icons'
 import Layout from '@/components/layout/Layout'
 import { Content } from '@/types'
-import { useContents } from '@/hooks/useContents'
+// import { useContents } from '@/hooks/useContents'
 import { CONTENT_TYPE_LABELS } from '@/utils/constants'
 
 export default function EditContentPage() {
   const router = useRouter()
   const params = useParams()
   const toast = useToast()
-  const { fetchContent, updateContent } = useContents()
+  // Mock data for testing
+  const MOCK_CONTENTS: Content[] = [
+    {
+      id: '1',
+      user_id: '00000000-0000-0000-0000-000000000001',
+      title: 'AI의 미래와 마케팅',
+      content: 'AI 기술이 마케팅 분야에 미치는 영향과 앞으로의 전망에 대해 알아보겠습니다. #AI #마케팅 #미래기술',
+      content_type: 'x_post',
+      tone: 'professional',
+      status: 'published',
+      topic: 'AI 마케팅',
+      tags: ['AI', '마케팅', '기술'],
+      word_count: 50,
+      published_at: '2024-01-15T10:00:00Z',
+      auto_generated: false,
+      created_at: '2024-01-15T09:30:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    }
+  ]
+
+  const fetchContent = async (contentId: string): Promise<Content | null> => {
+    const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
+    return mockContent || null
+  }
+
+  const updateContent = async (contentId: string, updates: Partial<Content>) => {
+    console.log('Updating content:', contentId, updates)
+    return { ...MOCK_CONTENTS[0], ...updates }
+  }
   
   const [content, setContent] = useState<Content | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,7 +104,7 @@ export default function EditContentPage() {
     } finally {
       setLoading(false)
     }
-  }, [params.id, fetchContent, toast])
+  }, [params.id]) // fetchContent와 toast 제거
 
   useEffect(() => {
     loadContent()
@@ -200,7 +228,7 @@ export default function EditContentPage() {
                 </Button>
               </Tooltip>
               <Button
-                leftIcon={<SaveIcon />}
+                leftIcon={<CheckIcon />}
                 colorScheme="brand"
                 onClick={handleSave}
                 isLoading={saving}
@@ -298,7 +326,7 @@ export default function EditContentPage() {
               취소
             </Button>
             <Button
-              leftIcon={<SaveIcon />}
+              leftIcon={<CheckIcon />}
               colorScheme="brand"
               onClick={handleSave}
               isLoading={saving}
