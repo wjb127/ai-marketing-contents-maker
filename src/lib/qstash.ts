@@ -261,3 +261,24 @@ export function calculateNextRun(
   
   return nextRun
 }
+
+// 스케줄 취소 (이전 v1 호환성을 위해)
+export async function cancelScheduledGeneration(messageId: string | null) {
+  if (!qstash || !messageId) {
+    return false
+  }
+
+  try {
+    await qstash.schedules.delete(messageId)
+    console.log('✅ Scheduled generation cancelled:', messageId)
+    return true
+  } catch (error) {
+    console.error('❌ Failed to cancel scheduled generation:', error)
+    return false
+  }
+}
+
+// QStash 설정 확인
+export function isQStashConfigured(): boolean {
+  return qstash !== null
+}
