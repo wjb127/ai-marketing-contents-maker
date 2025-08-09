@@ -101,11 +101,11 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  // 콘텐츠 타입 변경 시 추가 요청사항에 템플릿 자동 생성
+  // 콘텐츠 클리셰 변경 시 추가 요청사항에 템플릿 자동 생성
   const handleContentTypeChange = (newContentType: ContentType) => {
     const fields = getFieldsForContentType(newContentType)
     
-    // 타입별 전용 필드가 있으면 추가 요청사항에 템플릿 생성 (한국어 라벨 포함)
+    // 클리셰별 전용 필드가 있으면 추가 요청사항에 템플릿 생성 (한국어 라벨 포함)
     let templateText = ''
     if (fields.length > 0) {
       templateText = fields.map(field => `${field.key} (${field.label}): ${field.placeholder}`).join('\n')
@@ -139,7 +139,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>콘텐츠 타입</FormLabel>
+              <FormLabel>콘텐츠 클리셰</FormLabel>
               <Select
                 value={formData.contentType}
                 onChange={(e) => handleContentTypeChange(e.target.value as ContentType)}
@@ -214,7 +214,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                 minH="150px"
               />
               <FormHelperText color="gray.500">
-                💡 콘텐츠 타입별 전용 변수들이 자동으로 표시됩니다. 예시를 참고해서 실제 내용으로 수정해주세요.
+                💡 콘텐츠 클리셰별 전용 변수들이 자동으로 표시됩니다. 예시를 참고해서 실제 내용으로 수정해주세요.
               </FormHelperText>
             </FormControl>
 

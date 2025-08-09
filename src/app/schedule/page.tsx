@@ -182,7 +182,7 @@ export default function SchedulePage() {
     isActive: true
   })
 
-  // 콘텐츠 타입 변경 시 추가 지시사항에 템플릿 자동 생성 (콘텐츠 생성 폼과 동일한 로직)
+  // 콘텐츠 클리셰 변경 시 추가 지시사항에 템플릿 자동 생성 (콘텐츠 생성 폼과 동일한 로직)
   const handleScheduleContentTypeChange = (newContentType: string) => {
     const fields = getFieldsForContentType(newContentType)
     
@@ -902,7 +902,7 @@ export default function SchedulePage() {
                         <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
                           <GridItem>
                             <FormControl isRequired>
-                              <FormLabel>콘텐츠 타입</FormLabel>
+                              <FormLabel>콘텐츠 클리셰</FormLabel>
                               <Select
                                 value={formData.contentType}
                                 onChange={(e) => setFormData({...formData, contentType: e.target.value})}
@@ -1049,7 +1049,7 @@ export default function SchedulePage() {
                         <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
                           <GridItem>
                             <FormControl isRequired>
-                              <FormLabel>콘텐츠 타입</FormLabel>
+                              <FormLabel>콘텐츠 클리셰</FormLabel>
                               <Select
                                 value={formData.contentType}
                                 onChange={(e) => setFormData({...formData, contentType: e.target.value})}
@@ -1133,7 +1133,7 @@ export default function SchedulePage() {
                   <Grid templateColumns="repeat(2, 1fr)" gap={4} width="full">
                     <GridItem>
                       <FormControl isRequired>
-                        <FormLabel>콘텐츠 타입</FormLabel>
+                        <FormLabel>콘텐츠 클리셰</FormLabel>
                         <Select
                           value={scheduleFormData.contentType}
                           onChange={(e) => handleScheduleContentTypeChange(e.target.value)}

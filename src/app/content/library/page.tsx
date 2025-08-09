@@ -543,7 +543,7 @@ export default function ContentLibraryPage() {
 
                 <HStack spacing={4}>
                   <FormControl>
-                    <FormLabel>콘텐츠 타입</FormLabel>
+                    <FormLabel>콘텐츠 클리셰</FormLabel>
                     <Select
                       value={editFormData.content_type}
                       onChange={(e) => setEditFormData(prev => ({ ...prev, content_type: e.target.value }))}
