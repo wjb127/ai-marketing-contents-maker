@@ -103,11 +103,12 @@ export async function POST(request: NextRequest) {
       
     console.log('✅ Scheduled content generated successfully')
 
-    // 콘텐츠 저장 (dogfooding 환경에 맞게 수정)
+    // 콘텐츠 저장 (production schema)
     const contentData: any = {
       user_id: schedule.user_id,
+      title: schedule.name,
       content: generatedContent,
-      type: schedule.content_type,  // dogfooding schema uses 'type' column
+      content_type: schedule.content_type,
       tone: schedule.tone || schedule.content_tone || 'professional',
       topic: schedule.topics?.[0] || schedule.topic || '',
       status: 'draft',

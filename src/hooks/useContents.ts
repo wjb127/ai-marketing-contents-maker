@@ -146,8 +146,9 @@ export function useContents() {
       
       const savePayload = {
         user_id: user.id,
+        title: contentData.title || 'AI 생성 콘텐츠',
         content: contentData.content,
-        type: contentData.content_type,  // dogfooding schema uses 'type' column
+        content_type: contentData.content_type,
         tone: contentData.tone,
         topic: contentData.topic,
         status: (contentData.status as ContentStatus) || 'draft'
