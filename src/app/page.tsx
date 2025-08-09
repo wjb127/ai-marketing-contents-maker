@@ -31,9 +31,11 @@ export default function HomePage() {
               lineHeight="1.2"
               px={{ base: 2, md: 0 }}
             >
-              AI로 SNS 콘텐츠를
+              주제만 입력하면
               <br />
-              <Text as="span" color="brand.500">자동 생성하세요</Text>
+              <Text as="span" color="brand.500">클리셰에 맞는 SNS 콘텐츠</Text>
+              <br />
+              완성!
             </Heading>
             <Text 
               fontSize={{ base: "md", md: "lg" }} 
@@ -42,46 +44,35 @@ export default function HomePage() {
               px={{ base: 2, md: 0 }}
               lineHeight={{ base: "1.6", md: "1.5" }}
             >
-              AI가 당신의 SNS 콘텐츠를 자동으로 만들고 스케줄링해드립니다.
-              더 이상 매일 무엇을 포스팅할지 고민하지 마세요.
+              트위터, 인스타그램, 블로그까지! 각 플랫폼에 최적화된 
+              클리셰 스타일 콘텐츠를 AI가 즉시 생성해드립니다.
             </Text>
           </VStack>
 
-          {/* CTA Buttons */}
+          {/* CTA Button */}
           <VStack spacing={{ base: 3, md: 0 }} w="full" maxW="md">
-            <HStack 
-              spacing={{ base: 2, md: 4 }} 
-              direction={{ base: "column", sm: "row" }}
-              w="full"
-              justify="center"
-            >
+            <Box w="full" display="flex" justifyContent="center">
               <Button
                 size={{ base: "md", md: "lg" }}
                 colorScheme="brand"
                 leftIcon={<AddIcon />}
                 onClick={() => router.push('/content/create')}
-                px={{ base: 6, md: 8 }}
-                py={{ base: 4, md: 6 }}
-                fontSize={{ base: "sm", md: "md" }}
-                w={{ base: "full", sm: "auto" }}
-                minH="48px"
+                px={{ base: 8, md: 12 }}
+                py={{ base: 6, md: 8 }}
+                fontSize={{ base: "md", md: "lg" }}
+                fontWeight="bold"
+                borderRadius="xl"
+                boxShadow="lg"
+                _hover={{
+                  transform: "translateY(-2px)",
+                  boxShadow: "xl"
+                }}
+                transition="all 0.2s"
+                minH="56px"
               >
-                콘텐츠 생성하기
+                무료로 콘텐츠 생성하기
               </Button>
-              <Button
-                size={{ base: "md", md: "lg" }}
-                variant="outline"
-                leftIcon={<CalendarIcon />}
-                onClick={() => router.push('/schedule')}
-                px={{ base: 6, md: 8 }}
-                py={{ base: 4, md: 6 }}
-                fontSize={{ base: "sm", md: "md" }}
-                w={{ base: "full", sm: "auto" }}
-                minH="48px"
-              >
-                자동 스케줄 설정
-              </Button>
-            </HStack>
+            </Box>
           </VStack>
 
           {/* Features - Mobile Grid */}
@@ -93,7 +84,7 @@ export default function HomePage() {
               maxW="5xl"
               mx="auto"
             >
-              {/* AI 자동 생성 */}
+              {/* 클리셰 기반 생성 */}
               <Card 
                 shadow="sm"
                 borderRadius="lg"
@@ -107,13 +98,13 @@ export default function HomePage() {
                   flexDirection="column"
                   justifyContent="center"
                 >
-                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>🤖</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>✨</Text>
                   <Text 
                     fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
                     mb={{ base: 0.5, md: 2 }}
                   >
-                    AI 생성
+                    클리셰 기반
                   </Text>
                   <Text 
                     color="gray.600" 
@@ -121,12 +112,12 @@ export default function HomePage() {
                     display={{ base: "none", sm: "block" }}
                     lineHeight="1.3"
                   >
-                    주제만 입력하면 다양한 SNS 콘텐츠 자동 생성
+                    검증된 SNS 패턴으로 즉시 통하는 콘텐츠
                   </Text>
                 </CardBody>
               </Card>
 
-              {/* 자동 스케줄링 */}
+              {/* 다양한 플랫폼 */}
               <Card 
                 shadow="sm"
                 borderRadius="lg"
@@ -140,13 +131,13 @@ export default function HomePage() {
                   flexDirection="column"
                   justifyContent="center"
                 >
-                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>⏰</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>📱</Text>
                   <Text 
                     fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
                     mb={{ base: 0.5, md: 2 }}
                   >
-                    스케줄링
+                    멀티 플랫폼
                   </Text>
                   <Text 
                     color="gray.600" 
@@ -154,12 +145,12 @@ export default function HomePage() {
                     display={{ base: "none", sm: "block" }}
                     lineHeight="1.3"
                   >
-                    원하는 시간에 자동으로 콘텐츠 생성
+                    트위터부터 블로그까지 모든 SNS 대응
                   </Text>
                 </CardBody>
               </Card>
 
-              {/* 창의성 조절 */}
+              {/* 즉시 생성 */}
               <Card 
                 shadow="sm"
                 borderRadius="lg"
@@ -173,13 +164,13 @@ export default function HomePage() {
                   flexDirection="column"
                   justifyContent="center"
                 >
-                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>🎨</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>⚡</Text>
                   <Text 
                     fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
                     mb={{ base: 0.5, md: 2 }}
                   >
-                    창의성
+                    빠른 생성
                   </Text>
                   <Text 
                     color="gray.600" 
@@ -187,7 +178,7 @@ export default function HomePage() {
                     display={{ base: "none", sm: "block" }}
                     lineHeight="1.3"
                   >
-                    4단계 레벨로 콘텐츠 다양성 조절
+                    주제 입력 후 3초만에 완성된 콘텐츠
                   </Text>
                 </CardBody>
               </Card>
