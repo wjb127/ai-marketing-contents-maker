@@ -119,6 +119,7 @@ async function handler(request: NextRequest) {
         top_p: creativitySettings.top_p || 1.0,
         messages: [{ role: 'user', content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
 - Write in Korean (한국어)
+- KEEP IT CONCISE: Maximum 500 characters including spaces (공백 포함 500자 이내)
 - Write naturally like a human, avoid AI-like formatting
 - NO markdown syntax (no #, ##, **, -, •, etc.)
 - Use plain text with natural paragraph breaks
@@ -126,7 +127,8 @@ async function handler(request: NextRequest) {
 - Make it sound genuine and personal, not robotic
 - Follow Korean social media best practices
 - Include relevant context and examples when appropriate
-- Ensure the content matches the specified tone and content type perfectly` }]
+- Ensure the content matches the specified tone and content type perfectly
+- Focus on key message, be concise and impactful` }]
       })
       
       generatedContent = message.content[0]?.type === 'text' 
