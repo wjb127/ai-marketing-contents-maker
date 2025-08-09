@@ -26,6 +26,15 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Generating content with simple prompt')
     
+    // Smart prompt enhancement if additional_instructions is empty or missing
+    let enhancedPrompt = prompt
+    const hasAdditionalInstructions = requestData.additional_instructions && requestData.additional_instructions.trim()
+    
+    if (!hasAdditionalInstructions) {
+      // AI will automatically add smart defaults based on content type and topic
+      enhancedPrompt += '\n\nadditional_instructions: Use your expertise to create engaging, well-structured content that resonates with the target audience. Apply best practices for the chosen content type and tone.'
+    }
+    
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
@@ -33,7 +42,12 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Create content based on these parameters:\n\n${prompt}\n\nGenerate high-quality content according to the specified requirements.`
+          content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
+- Write in Korean (한국어)
+- Make it engaging and professional
+- Follow Korean social media best practices
+- Include relevant context and examples when appropriate
+- Ensure the content matches the specified tone and content type perfectly`
         }
       ]
     })
