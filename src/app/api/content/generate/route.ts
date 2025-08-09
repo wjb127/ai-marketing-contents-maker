@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
           role: 'user',
           content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
 - Write in Korean (한국어)
-- Make it engaging and professional
+- Write naturally like a human, avoid AI-like formatting
+- NO markdown syntax (no #, ##, **, -, •, etc.)
+- Use plain text with natural paragraph breaks
+- Write in a conversational, engaging tone
+- Make it sound genuine and personal, not robotic
 - Follow Korean social media best practices
 - Include relevant context and examples when appropriate
 - Ensure the content matches the specified tone and content type perfectly`
