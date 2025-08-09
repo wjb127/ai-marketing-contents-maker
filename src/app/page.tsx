@@ -33,7 +33,49 @@ export default function HomePage() {
             >
               주제만 입력하면
               <br />
-              <Text as="span" color="brand.500">클리셰에 맞는 SNS 콘텐츠</Text>
+              <Box as="span" position="relative" display="inline-block">
+                <Text 
+                  as="span" 
+                  bgGradient="linear(135deg, #667eea 0%, #764ba2 100%)"
+                  bgClip="text"
+                  fontWeight="black"
+                  position="relative"
+                  _after={{
+                    content: '""',
+                    position: "absolute",
+                    bottom: "-4px",
+                    left: "0",
+                    right: "0",
+                    height: "4px",
+                    background: "linear-gradient(135deg, #667eea, #764ba2)",
+                    borderRadius: "2px",
+                    animation: "shimmer 2s infinite"
+                  }}
+                  sx={{
+                    "@keyframes shimmer": {
+                      "0%": { transform: "translateX(-100%)" },
+                      "100%": { transform: "translateX(100%)" }
+                    }
+                  }}
+                >
+                  클리셰에 맞는 SNS 콘텐츠
+                </Text>
+                <Box
+                  position="absolute"
+                  top="-8px"
+                  right="-12px"
+                  fontSize="lg"
+                  animation="bounce 1.5s infinite"
+                  sx={{
+                    "@keyframes bounce": {
+                      "0%, 100%": { transform: "translateY(0)" },
+                      "50%": { transform: "translateY(-4px)" }
+                    }
+                  }}
+                >
+                  ⭐
+                </Box>
+              </Box>
               <br />
               완성!
             </Heading>
@@ -84,36 +126,95 @@ export default function HomePage() {
               maxW="5xl"
               mx="auto"
             >
-              {/* 클리셰 기반 생성 */}
+              {/* 핵심 경쟁력: 클리셰 기반 생성 */}
               <Card 
-                shadow="sm"
-                borderRadius="lg"
+                shadow="xl"
+                borderRadius="xl"
                 h="full"
+                position="relative"
+                overflow="hidden"
+                bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                color="white"
+                transform="scale(1.05)"
+                _before={{
+                  content: '""',
+                  position: "absolute",
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  background: "linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c)",
+                  borderRadius: "xl",
+                  zIndex: -1,
+                  filter: "blur(6px)",
+                  opacity: 0.6,
+                }}
+                animation="pulse 3s infinite"
+                sx={{
+                  "@keyframes pulse": {
+                    "0%, 100%": { transform: "scale(1.05)" },
+                    "50%": { transform: "scale(1.08)" }
+                  }
+                }}
               >
                 <CardBody 
                   textAlign="center" 
-                  py={{ base: 3, sm: 4, md: 6 }} 
-                  px={{ base: 1, sm: 2, md: 4 }}
+                  py={{ base: 4, sm: 5, md: 7 }} 
+                  px={{ base: 2, sm: 3, md: 5 }}
                   display="flex"
                   flexDirection="column"
                   justifyContent="center"
+                  position="relative"
                 >
-                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>✨</Text>
-                  <Text 
-                    fontSize={{ base: "2xs", sm: "xs", md: "md" }}
-                    fontWeight="bold"
-                    mb={{ base: 0.5, md: 2 }}
+                  <Box
+                    fontSize={{ base: "xl", sm: "2xl", md: "3xl" }} 
+                    mb={2}
+                    animation="sparkle 2s infinite"
+                    sx={{
+                      "@keyframes sparkle": {
+                        "0%, 100%": { transform: "rotate(0deg) scale(1)" },
+                        "25%": { transform: "rotate(-10deg) scale(1.1)" },
+                        "75%": { transform: "rotate(10deg) scale(1.1)" }
+                      }
+                    }}
                   >
-                    클리셰 기반
-                  </Text>
-                  <Text 
-                    color="gray.600" 
-                    fontSize={{ base: "3xs", sm: "2xs", md: "sm" }}
-                    display={{ base: "none", sm: "block" }}
-                    lineHeight="1.3"
-                  >
-                    검증된 SNS 패턴으로 즉시 통하는 콘텐츠
-                  </Text>
+                    ✨
+                  </Box>
+                  <VStack spacing={1}>
+                    <HStack justify="center" spacing={1}>
+                      <Text 
+                        fontSize={{ base: "xs", sm: "sm", md: "lg" }}
+                        fontWeight="bold"
+                        color="white"
+                      >
+                        클리셰 기반
+                      </Text>
+                      <Badge 
+                        colorScheme="yellow" 
+                        variant="solid" 
+                        size="sm"
+                        borderRadius="full"
+                        animation="glow 2s infinite alternate"
+                        sx={{
+                          "@keyframes glow": {
+                            "0%": { boxShadow: "0 0 5px rgba(255, 215, 0, 0.5)" },
+                            "100%": { boxShadow: "0 0 15px rgba(255, 215, 0, 0.8)" }
+                          }
+                        }}
+                      >
+                        🏆
+                      </Badge>
+                    </HStack>
+                    <Text 
+                      color="whiteAlpha.900" 
+                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                      display={{ base: "none", sm: "block" }}
+                      lineHeight="1.4"
+                      fontWeight="medium"
+                    >
+                      검증된 SNS 패턴으로<br />즉시 통하는 콘텐츠
+                    </Text>
+                  </VStack>
                 </CardBody>
               </Card>
 

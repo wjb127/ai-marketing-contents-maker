@@ -138,27 +138,131 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               />
             </FormControl>
 
-            <FormControl isRequired>
-              <FormLabel>콘텐츠 클리셰</FormLabel>
-              <Select
-                value={formData.contentType}
-                onChange={(e) => handleContentTypeChange(e.target.value as ContentType)}
-              >
-                {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-              <FormHelperText>
-                <HStack>
-                  <Text fontSize="sm">{selectedContentSpec.description}</Text>
-                  <Badge colorScheme="blue" size="sm">
-                    최대: {selectedContentSpec.maxLength}자
+            {/* 핵심 경쟁력: 클리셰 선택 영역 */}
+            <Box
+              position="relative"
+              p={6}
+              borderRadius="xl"
+              bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              color="white"
+              boxShadow="xl"
+              _before={{
+                content: '""',
+                position: "absolute",
+                top: -2,
+                left: -2,
+                right: -2,
+                bottom: -2,
+                background: "linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c)",
+                borderRadius: "xl",
+                zIndex: -1,
+                filter: "blur(8px)",
+                opacity: 0.7,
+              }}
+              animation="pulse 3s infinite"
+              sx={{
+                "@keyframes pulse": {
+                  "0%, 100%": { transform: "scale(1)" },
+                  "50%": { transform: "scale(1.02)" }
+                }
+              }}
+            >
+              <VStack spacing={4} align="stretch">
+                <HStack justify="space-between" align="center">
+                  <HStack spacing={2}>
+                    <Box
+                      fontSize="xl"
+                      animation="sparkle 2s infinite"
+                      sx={{
+                        "@keyframes sparkle": {
+                          "0%, 100%": { transform: "rotate(0deg) scale(1)" },
+                          "25%": { transform: "rotate(-10deg) scale(1.1)" },
+                          "75%": { transform: "rotate(10deg) scale(1.1)" }
+                        }
+                      }}
+                    >
+                      ✨
+                    </Box>
+                    <FormLabel color="white" mb={0} fontSize="lg" fontWeight="bold">
+                      콘텐츠 클리셰 
+                    </FormLabel>
+                  </HStack>
+                  <Badge 
+                    colorScheme="yellow" 
+                    variant="solid" 
+                    px={3} 
+                    py={1}
+                    borderRadius="full"
+                    fontSize="xs"
+                    fontWeight="bold"
+                    textTransform="uppercase"
+                    animation="glow 2s infinite alternate"
+                    sx={{
+                      "@keyframes glow": {
+                        "0%": { boxShadow: "0 0 5px rgba(255, 215, 0, 0.5)" },
+                        "100%": { boxShadow: "0 0 20px rgba(255, 215, 0, 0.8)" }
+                      }
+                    }}
+                  >
+                    🏆 핵심 경쟁력
                   </Badge>
                 </HStack>
-              </FormHelperText>
-            </FormControl>
+                
+                <Text fontSize="sm" color="whiteAlpha.900" lineHeight="1.5">
+                  검증된 SNS 성공 패턴으로 즉시 통하는 콘텐츠를 생성하세요
+                </Text>
+                
+                <FormControl isRequired>
+                  <Select
+                    value={formData.contentType}
+                    onChange={(e) => handleContentTypeChange(e.target.value as ContentType)}
+                    bg="white"
+                    color="gray.800"
+                    border="none"
+                    borderRadius="lg"
+                    fontSize="md"
+                    fontWeight="semibold"
+                    _focus={{
+                      bg: "white",
+                      boxShadow: "0 0 0 3px rgba(255, 255, 255, 0.3)"
+                    }}
+                    _hover={{
+                      bg: "gray.50"
+                    }}
+                    size="lg"
+                  >
+                    {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value} style={{ color: '#2D3748' }}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <HStack spacing={3} justify="space-between" flexWrap="wrap">
+                  <VStack spacing={1} align="start">
+                    <Text fontSize="xs" color="whiteAlpha.700" fontWeight="semibold">
+                      최적화된 길이
+                    </Text>
+                    <Badge colorScheme="whiteAlpha" variant="solid" size="sm">
+                      최대 {selectedContentSpec.maxLength}자
+                    </Badge>
+                  </VStack>
+                  <VStack spacing={1} align="end">
+                    <Text fontSize="xs" color="whiteAlpha.700" fontWeight="semibold">
+                      추천 해시태그
+                    </Text>
+                    <Badge colorScheme="whiteAlpha" variant="solid" size="sm">
+                      {selectedContentSpec.recommendedHashtags}개
+                    </Badge>
+                  </VStack>
+                </HStack>
+                
+                <Text fontSize="xs" color="whiteAlpha.800" fontStyle="italic">
+                  💡 {selectedContentSpec.description}
+                </Text>
+              </VStack>
+            </Box>
 
             <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4} width="100%">
               <FormControl>
