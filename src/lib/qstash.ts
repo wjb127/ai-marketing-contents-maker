@@ -33,17 +33,14 @@ export async function createRecurringSchedule(
       cron = `${minutes} */6 * * *` // 6시간마다 X분
       break
     case 'daily':
-      // UTC로 변환 (KST-9)
-      const utcHours = (hours - 9 + 24) % 24
-      cron = `${minutes} ${utcHours} * * *` // 매일 특정 시간
+      // 한국 시간 그대로 사용 (QStash는 timezone을 지원)
+      cron = `${minutes} ${hours} * * *` // 매일 특정 시간
       break
     case 'weekly':
-      const utcHoursWeekly = (hours - 9 + 24) % 24
-      cron = `${minutes} ${utcHoursWeekly} * * 1` // 매주 월요일
+      cron = `${minutes} ${hours} * * 1` // 매주 월요일
       break
     case 'monthly':
-      const utcHoursMonthly = (hours - 9 + 24) % 24
-      cron = `${minutes} ${utcHoursMonthly} 1 * *` // 매월 1일
+      cron = `${minutes} ${hours} 1 * *` // 매월 1일
       break
     default:
       throw new Error(`Unsupported frequency: ${frequency}`)
@@ -69,7 +66,10 @@ export async function createRecurringSchedule(
       headers: {
         'Content-Type': 'application/json'
       },
-      retries: 3
+      retries: 3,
+      settings: {
+        timezone: timezone // Asia/Seoul 시간대 설정
+      }
     })
 
     console.log('✅ QStash schedule created:', response)

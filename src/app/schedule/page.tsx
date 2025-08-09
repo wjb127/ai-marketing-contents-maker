@@ -53,6 +53,7 @@ import { useSchedules } from '@/hooks/useSchedules'
 import { usePrompts } from '@/hooks/usePrompts'
 import { useContents } from '@/hooks/useContents'
 import { PLAN_LIMITS, CONTENT_TYPE_LABELS, TONE_LABELS, FREQUENCY_LABELS } from '@/utils/constants'
+import { getFieldsForContentType } from '@/utils/content-type-fields'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import { ScheduleCountdown } from '@/components/schedule/ScheduleCountdown'
 import { GlobalClock } from '@/components/schedule/GlobalClock'
@@ -151,6 +152,22 @@ export default function SchedulePage() {
     isActive: true
   })
 
+  // 타겟 오디언스와 추가 지시사항을 합친 값을 계산
+  const getCombinedInstructions = (targetAudience: string, additionalInstructions: string) => {
+    let combined = ''
+    if (targetAudience && targetAudience.trim()) {
+      combined = `타겟 오디언스: ${targetAudience.trim()}`
+    }
+    if (additionalInstructions && additionalInstructions.trim()) {
+      if (combined) {
+        combined += '\n\n' + additionalInstructions.trim()
+      } else {
+        combined = additionalInstructions.trim()
+      }
+    }
+    return combined
+  }
+
   const [scheduleFormData, setScheduleFormData] = useState({
     name: '',
     topic: '',
@@ -164,6 +181,23 @@ export default function SchedulePage() {
     timeOfDay: '09:00',
     isActive: true
   })
+
+  // 콘텐츠 타입 변경 시 추가 지시사항에 템플릿 자동 생성 (콘텐츠 생성 폼과 동일한 로직)
+  const handleScheduleContentTypeChange = (newContentType: string) => {
+    const fields = getFieldsForContentType(newContentType)
+    
+    // 타입별 전용 필드가 있으면 추가 지시사항에 템플릿 생성 (한국어 라벨 포함)
+    let templateText = ''
+    if (fields.length > 0) {
+      templateText = fields.map(field => `${field.key} (${field.label}): ${field.placeholder}`).join('\n')
+    }
+    
+    setScheduleFormData(prev => ({ 
+      ...prev, 
+      contentType: newContentType,
+      additionalInstructions: templateText // 기존 내용을 템플릿으로 교체
+    }))
+  }
 
   const userPlan = user?.subscription_plan || 'free'
   const planLimits = PLAN_LIMITS[userPlan as keyof typeof PLAN_LIMITS]
@@ -913,12 +947,33 @@ export default function SchedulePage() {
                         </FormControl>
 
                         <FormControl>
-                          <FormLabel>추가 지시사항</FormLabel>
+                          <FormLabel>추가 지시사항 (선택사항)</FormLabel>
+                          <Text fontSize="sm" color="gray.600" mb={2}>
+                            타겟 오디언스가 자동으로 포함됩니다. 추가 스타일 가이드나 지시사항을 입력하세요.
+                          </Text>
                           <Textarea
-                            value={formData.additionalInstructions}
-                            onChange={(e) => setFormData({...formData, additionalInstructions: e.target.value})}
-                            placeholder="AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
-                            rows={4}
+                            value={getCombinedInstructions(formData.targetAudience, formData.additionalInstructions)}
+                            onChange={(e) => {
+                              // 타겟 오디언스 부분을 제거하고 나머지만 additionalInstructions에 저장
+                              let newValue = e.target.value
+                              if (formData.targetAudience && formData.targetAudience.trim()) {
+                                const targetPrefix = `타겟 오디언스: ${formData.targetAudience.trim()}`
+                                if (newValue.startsWith(targetPrefix)) {
+                                  newValue = newValue.substring(targetPrefix.length)
+                                  if (newValue.startsWith('\n\n')) {
+                                    newValue = newValue.substring(2)
+                                  }
+                                }
+                              }
+                              setFormData({...formData, additionalInstructions: newValue})
+                            }}
+                            placeholder={
+                              formData.targetAudience 
+                                ? `타겟 오디언스: ${formData.targetAudience}\n\n여기에 추가 지시사항을 입력하세요...`
+                                : "AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
+                            }
+                            rows={5}
+                            bg={formData.targetAudience ? "blue.50" : "white"}
                           />
                         </FormControl>
 
@@ -1081,7 +1136,7 @@ export default function SchedulePage() {
                         <FormLabel>콘텐츠 타입</FormLabel>
                         <Select
                           value={scheduleFormData.contentType}
-                          onChange={(e) => setScheduleFormData({...scheduleFormData, contentType: e.target.value})}
+                          onChange={(e) => handleScheduleContentTypeChange(e.target.value)}
                         >
                           {Object.entries(CONTENT_TYPE_LABELS).map(([key, label]) => (
                             <option key={key} value={key}>{label}</option>
@@ -1123,12 +1178,33 @@ export default function SchedulePage() {
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel>추가 지시사항</FormLabel>
+                    <FormLabel>추가 지시사항 (선택사항)</FormLabel>
+                    <Text fontSize="sm" color="gray.600" mb={2}>
+                      타겟 오디언스가 자동으로 포함됩니다. 추가 스타일 가이드나 지시사항을 입력하세요.
+                    </Text>
                     <Textarea
-                      value={scheduleFormData.additionalInstructions}
-                      onChange={(e) => setScheduleFormData({...scheduleFormData, additionalInstructions: e.target.value})}
-                      placeholder="AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
-                      rows={3}
+                      value={getCombinedInstructions(scheduleFormData.targetAudience, scheduleFormData.additionalInstructions)}
+                      onChange={(e) => {
+                        // 타겟 오디언스 부분을 제거하고 나머지만 additionalInstructions에 저장
+                        let newValue = e.target.value
+                        if (scheduleFormData.targetAudience && scheduleFormData.targetAudience.trim()) {
+                          const targetPrefix = `타겟 오디언스: ${scheduleFormData.targetAudience.trim()}`
+                          if (newValue.startsWith(targetPrefix)) {
+                            newValue = newValue.substring(targetPrefix.length)
+                            if (newValue.startsWith('\n\n')) {
+                              newValue = newValue.substring(2)
+                            }
+                          }
+                        }
+                        setScheduleFormData({...scheduleFormData, additionalInstructions: newValue})
+                      }}
+                      placeholder={
+                        scheduleFormData.targetAudience 
+                          ? `타겟 오디언스: ${scheduleFormData.targetAudience}\n\n여기에 추가 지시사항을 입력하세요...`
+                          : "AI에게 전달할 추가 지시사항이나 스타일 가이드를 입력하세요"
+                      }
+                      rows={4}
+                      bg={scheduleFormData.targetAudience ? "blue.50" : "white"}
                     />
                   </FormControl>
 
