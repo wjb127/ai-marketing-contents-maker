@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   Box,
@@ -48,11 +48,7 @@ export default function EditContentPage() {
     status: 'draft',
   })
 
-  useEffect(() => {
-    loadContent()
-  }, [params.id])
-
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
     if (!params.id) return
     
     setLoading(true)
@@ -80,7 +76,11 @@ export default function EditContentPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, fetchContent, toast])
+
+  useEffect(() => {
+    loadContent()
+  }, [loadContent])
 
   const handleCopyContent = () => {
     if (formData.content) {
