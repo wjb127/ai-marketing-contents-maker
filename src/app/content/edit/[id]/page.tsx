@@ -26,7 +26,7 @@ import {
 import { ArrowLeftIcon, CopyIcon, CheckIcon } from '@chakra-ui/icons'
 import Layout from '@/components/layout/Layout'
 import { Content } from '@/types'
-// import { useContents } from '@/hooks/useContents'
+import { createClientComponentClient } from '@/lib/supabase'
 import { CONTENT_TYPE_LABELS } from '@/utils/constants'
 
 export default function EditContentPage() {
@@ -53,14 +53,75 @@ export default function EditContentPage() {
     }
   ]
 
+  const supabase = createClientComponentClient()
+
   const fetchContent = async (contentId: string): Promise<Content | null> => {
-    const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
-    return mockContent || null
+    try {
+      console.log('🔍 Fetching single content:', contentId)
+      
+      // Mock 데이터에서 먼저 확인
+      const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
+      if (mockContent) {
+        console.log('✅ Found in mock data:', mockContent.title)
+        return mockContent
+      }
+
+      // Supabase에서 실제 콘텐츠 가져오기
+      const { data, error } = await supabase
+        .from('contents')
+        .select('*')
+        .eq('id', contentId)
+        .single()
+
+      if (error) {
+        console.error('❌ Error fetching content from DB:', error)
+        return null
+      }
+
+      console.log('✅ Found in database:', data.title || data.id)
+      return data
+    } catch (error) {
+      console.error('❌ Error fetching content:', error)
+      return null
+    }
   }
 
   const updateContent = async (contentId: string, updates: Partial<Content>) => {
-    console.log('Updating content:', contentId, updates)
-    return { ...MOCK_CONTENTS[0], ...updates }
+    try {
+      console.log('📝 Updating content:', contentId, updates)
+      
+      // Mock 데이터는 로컬에서만 업데이트
+      if (MOCK_CONTENTS.find(c => c.id === contentId)) {
+        console.log('✅ Updated mock content locally')
+        return { ...MOCK_CONTENTS[0], ...updates }
+      }
+
+      // 실제 DB 업데이트
+      const { data: updatedContent, error } = await supabase
+        .from('contents')
+        .update({
+          title: updates.title,
+          content: updates.content,
+          topic: updates.topic,
+          tone: updates.tone,
+          status: updates.status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', contentId)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Database update error:', error)
+        throw new Error(error.message)
+      }
+
+      console.log('✅ Content updated in database:', updatedContent)
+      return updatedContent
+    } catch (error) {
+      console.error('❌ Error updating content:', error)
+      throw error
+    }
   }
   
   const [content, setContent] = useState<Content | null>(null)
