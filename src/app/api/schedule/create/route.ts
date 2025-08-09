@@ -50,14 +50,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate next run time
-    const nextRun = calculateNextRun(frequency, time_of_day, timezone)
+    const calculatedNextRun = calculateNextRun(frequency, time_of_day, timezone)
     
-    // KST로 변환해서 로그 출력 (+1초 보정)
-    const nextRunKST = new Date(nextRun.getTime() + 1000)
-    console.log('📅 Next run scheduled:', {
-      utc: nextRun.toISOString(),
-      kst: nextRunKST.toISOString(),
-      kstReadable: nextRunKST.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+    // 9시간 보정: 시스템이 자동으로 +9시간을 할 것을 예상하여 -9시간으로 조정
+    const nextRun = new Date(calculatedNextRun.getTime() - 9 * 60 * 60 * 1000) // 9시간 빼기
+    
+    console.log('📅 Next run calculated with 9h correction:', {
+      originalCalculated: calculatedNextRun.toISOString(),
+      correctedForStorage: nextRun.toISOString(),
+      expectedDisplay: calculatedNextRun.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
     })
 
     // Prepare data for insertion (dogfooding schema)

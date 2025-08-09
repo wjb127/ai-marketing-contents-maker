@@ -41,22 +41,10 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
     return null // SSR 방지
   }
 
-  // 시간 처리 및 자동 보정 로직
+  // 시간 처리 - 저장 시점에서 이미 보정됨
   const nowKST = currentTime // 현재 시간은 그대로 사용
-  const nextRunKST = new Date(nextRunAt) // DB에서 온 시간은 올바르게 파싱됨
-  
-  // UTC-KST 변환 오류 자동 감지 및 보정 (9시간 차이 패턴)
-  const timeDiffHours = (nextRunKST.getTime() - nowKST.getTime()) / (1000 * 60 * 60)
-  let nextRunKSTLocal = nextRunKST
-  
-  // 시간 차이가 8-10시간 범위에 있고, 현재 시간보다 미래인 경우 9시간 빼서 보정
-  if (timeDiffHours > 8 && timeDiffHours < 10 && nextRunKST > nowKST) {
-    console.log('🔧 Detected 9-hour timezone offset, applying correction:', {
-      original: nextRunKST.toLocaleString('ko-KR'),
-      corrected: new Date(nextRunKST.getTime() - 9 * 60 * 60 * 1000).toLocaleString('ko-KR')
-    })
-    nextRunKSTLocal = new Date(nextRunKST.getTime() - 9 * 60 * 60 * 1000) // 9시간 빼기
-  }
+  const nextRunKST = new Date(nextRunAt) // DB에서 온 시간은 이미 보정되어 저장됨
+  const nextRunKSTLocal = nextRunKST // 추가 변환 없이 그대로 사용
 
   // 시간 차이 계산 (밀리초)
   const timeDiff = nextRunKSTLocal.getTime() - nowKST.getTime()

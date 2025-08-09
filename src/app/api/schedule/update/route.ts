@@ -55,14 +55,15 @@ export async function PUT(request: NextRequest) {
       const newTimeOfDay = updates.time_of_day || existingSchedule.time_of_day
       const newTimezone = updates.timezone || existingSchedule.timezone || 'Asia/Seoul'
       
-      nextRun = calculateNextRun(newFrequency, newTimeOfDay, newTimezone)
+      const calculatedNextRun = calculateNextRun(newFrequency, newTimeOfDay, newTimezone)
       
-      // KST로 변환해서 로그 출력 (+1초 보정)
-      const nextRunKST = new Date(nextRun.getTime() + 1000)
-      console.log('📅 New next run scheduled:', {
-        utc: nextRun.toISOString(),
-        kst: nextRunKST.toISOString(),
-        kstReadable: nextRunKST.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+      // 9시간 보정: 시스템이 자동으로 +9시간을 할 것을 예상하여 -9시간으로 조정
+      nextRun = new Date(calculatedNextRun.getTime() - 9 * 60 * 60 * 1000) // 9시간 빼기
+      
+      console.log('📅 Updated next run with 9h correction:', {
+        originalCalculated: calculatedNextRun.toISOString(),
+        correctedForStorage: nextRun.toISOString(),
+        expectedDisplay: calculatedNextRun.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
       })
 
       // 로컬 개발 환경 확인
