@@ -11,6 +11,7 @@ import {
   SimpleGrid,
   Card,
   CardBody,
+  Badge,
 } from '@chakra-ui/react'
 import { AddIcon, CalendarIcon } from '@chakra-ui/icons'
 import Layout from '@/components/layout/Layout'
