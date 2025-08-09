@@ -153,9 +153,11 @@ export function useContents() {
           tags: contentData.tags || [],
           word_count: contentData.word_count || contentData.content.split(/\s+/).length,
           estimated_read_time: contentData.estimated_read_time || Math.ceil(contentData.content.split(/\s+/).length / 200),
-          auto_generated: true,
-          target_audience: contentData.target_audience,
-          additional_instructions: contentData.additional_instructions
+          auto_generated: false,
+          metadata: {
+            target_audience: contentData.target_audience,
+            additional_instructions: contentData.additional_instructions
+          }
         })
         .select()
         .single()

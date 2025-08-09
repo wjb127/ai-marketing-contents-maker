@@ -77,13 +77,22 @@ export async function POST(request: NextRequest) {
       .from('contents')
       .insert({
         user_id: user.id,
-        type,
+        title: `${topic} - ${new Date().toLocaleDateString('ko-KR')}`,
+        content_type: type,
         tone,
         topic,
         content: generatedContent,
         target_audience,
         additional_instructions,
-        status: 'draft'
+        status: 'draft',
+        auto_generated: false,
+        tags: [],
+        word_count: generatedContent.split(/\s+/).length,
+        estimated_read_time: Math.ceil(generatedContent.split(/\s+/).length / 200),
+        metadata: {
+          target_audience,
+          additional_instructions
+        }
       })
       .select()
       .single()

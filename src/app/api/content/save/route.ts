@@ -44,12 +44,14 @@ export async function POST(request: NextRequest) {
         tone,
         topic,
         status,
-        target_audience,
-        additional_instructions,
         tags,
         word_count: word_count || content.split(/\s+/).length,
         estimated_read_time: estimated_read_time || Math.ceil(content.split(/\s+/).length / 200),
-        auto_generated: true
+        auto_generated: false,
+        metadata: {
+          target_audience,
+          additional_instructions
+        }
       })
       .select()
       .single()
