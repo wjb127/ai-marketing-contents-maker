@@ -103,16 +103,15 @@ export async function POST(request: NextRequest) {
       
     console.log('✅ Scheduled content generated successfully')
 
-    // 콘텐츠 저장 (production schema)
+    // 콘텐츠 저장 (actual schema)
     const contentData: any = {
       user_id: schedule.user_id,
-      title: schedule.name,
       content: generatedContent,
-      content_type: schedule.content_type,
-      tone: schedule.tone || schedule.content_tone || 'professional',
-      topic: schedule.topics?.[0] || schedule.topic || '',
-      status: 'draft',
-      schedule_id: scheduleId
+      type: schedule.content_type,
+      target_audience: schedule.target_audience || null,
+      additional_instructions: schedule.additional_instructions || null,
+      prompt: `content_type: ${schedule.content_type}\ntone: ${schedule.tone || schedule.content_tone || 'professional'}\ntopic: ${schedule.topics?.[0] || schedule.topic || ''}`,
+      status: 'draft'
     }
     
     console.log('📝 Attempting to save content:', JSON.stringify(contentData, null, 2))

@@ -60,16 +60,16 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Content generated successfully')
     
-    // Save content to database (production schema)
+    // Save content to database (actual schema)
     const { data: contentData, error: contentError } = await supabase
       .from('contents')
       .insert({
         user_id: user.id,
-        title: 'AI 생성 콘텐츠',
         content: generatedContent,
-        content_type: requestData.type || 'x_post',
-        tone: requestData.tone || 'professional',
-        topic: requestData.topic || '일반 주제',
+        type: requestData.type || 'x_post',
+        target_audience: requestData.target_audience || null,
+        additional_instructions: requestData.additional_instructions || null,
+        prompt: prompt,
         status: 'draft'
       })
       .select()

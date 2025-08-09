@@ -146,11 +146,11 @@ export function useContents() {
       
       const savePayload = {
         user_id: user.id,
-        title: contentData.title || 'AI 생성 콘텐츠',
         content: contentData.content,
-        content_type: contentData.content_type,
-        tone: contentData.tone,
-        topic: contentData.topic,
+        type: contentData.content_type,
+        target_audience: contentData.target_audience || null,
+        additional_instructions: contentData.additional_instructions || null,
+        prompt: `content_type: ${contentData.content_type}\ntone: ${contentData.tone}\ntopic: ${contentData.topic}`,
         status: (contentData.status as ContentStatus) || 'draft'
       }
       
