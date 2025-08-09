@@ -102,7 +102,8 @@ export async function PUT(request: NextRequest) {
     // 데이터베이스 업데이트
     const updateData = {
       ...updates,
-      next_run_at: nextRun.toISOString()
+      // nextRun이 Date 객체인지 확인하고 적절히 처리
+      next_run_at: nextRun instanceof Date ? nextRun.toISOString() : nextRun
     }
 
     console.log('Updating schedule with:', updateData)

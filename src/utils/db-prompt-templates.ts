@@ -45,33 +45,39 @@ export function replacePromptVariables(
 ): string {
   let processedTemplate = template
 
-  // 각 변수를 템플릿에서 치환
+  // 각 변수를 템플릿에서 치환 (single braces와 double braces 모두 지원)
   Object.entries(variables).forEach(([key, value]) => {
     if (value) {
-      const regex = new RegExp(`{{${key}}}`, 'g')
-      processedTemplate = processedTemplate.replace(regex, value.toString())
+      // Double braces {{ }} 형식
+      const doubleRegex = new RegExp(`{{${key}}}`, 'g')
+      processedTemplate = processedTemplate.replace(doubleRegex, value.toString())
+      
+      // Single braces { } 형식 (데이터베이스 템플릿용)
+      const singleRegex = new RegExp(`{${key}}`, 'g')
+      processedTemplate = processedTemplate.replace(singleRegex, value.toString())
     }
   })
 
   // 남은 빈 변수들은 기본값으로 치환 또는 제거
   processedTemplate = processedTemplate.replace(/{{\w+}}/g, '')
+  processedTemplate = processedTemplate.replace(/{\w+}/g, '')
 
   return processedTemplate
 }
 
-// 콘텐츠 타입에 따른 템플릿명 매핑
+// 콘텐츠 타입에 따른 템플릿명 매핑 (한국어 템플릿명 사용)
 function getTemplateNameFromContentType(contentType: ContentType): string {
   const templateMapping: Record<ContentType, string> = {
-    'x_post': 'x_post_generation',
-    'thread': 'thread_generation',
-    'blog_post': 'blog_post_generation',
-    'youtube_script': 'youtube_script_generation',
-    'instagram_reel_script': 'instagram_reel_generation',
-    'linkedin_post': 'linkedin_post_generation',
-    'facebook_post': 'facebook_post_generation'
+    'x_post': 'X 포스트 기본 템플릿',
+    'thread': '스레드 기본 템플릿',
+    'blog_post': '블로그 포스트 기본 템플릿',
+    'youtube_script': 'YouTube 스크립트 기본 템플릿',
+    'instagram_reel_script': '인스타그램 릴 기본 템플릿',
+    'linkedin_post': 'LinkedIn 포스트 기본 템플릿',
+    'facebook_post': 'Facebook 포스트 기본 템플릿'
   }
 
-  return templateMapping[contentType] || 'x_post_generation'
+  return templateMapping[contentType] || 'X 포스트 기본 템플릿'
 }
 
 // 데이터베이스 기반 프롬프트 생성 (메인 함수)
