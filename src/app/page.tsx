@@ -84,39 +84,42 @@ export default function HomePage() {
             </HStack>
           </VStack>
 
-          {/* Features - Mobile Horizontal Scroll */}
-          <Box w="full" overflow="auto" pb={2}>
-            <HStack 
-              spacing={3}
-              align="stretch"
-              minW={{ base: "max-content", md: "auto" }}
-              justify={{ base: "flex-start", md: "center" }}
-              px={{ base: 4, md: 0 }}
+          {/* Features - Mobile Grid */}
+          <Box w="full" px={{ base: 2, md: 0 }}>
+            <SimpleGrid 
+              columns={{ base: 3, md: 3 }}
+              spacing={{ base: 2, md: 4 }}
+              w="full"
+              maxW="5xl"
+              mx="auto"
             >
               {/* AI 자동 생성 */}
               <Card 
-                minW={{ base: "100px", md: "280px" }}
-                maxW={{ base: "100px", md: "280px" }}
                 shadow="sm"
                 borderRadius="lg"
+                h="full"
               >
                 <CardBody 
                   textAlign="center" 
-                  py={{ base: 3, md: 6 }} 
-                  px={{ base: 2, md: 4 }}
+                  py={{ base: 3, sm: 4, md: 6 }} 
+                  px={{ base: 1, sm: 2, md: 4 }}
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="center"
                 >
-                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>🤖</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>🤖</Text>
                   <Text 
-                    fontSize={{ base: "xs", md: "md" }}
+                    fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
-                    mb={{ base: 1, md: 2 }}
+                    mb={{ base: 0.5, md: 2 }}
                   >
                     AI 생성
                   </Text>
                   <Text 
                     color="gray.600" 
-                    fontSize={{ base: "2xs", md: "sm" }}
-                    display={{ base: "none", md: "block" }}
+                    fontSize={{ base: "3xs", sm: "2xs", md: "sm" }}
+                    display={{ base: "none", sm: "block" }}
+                    lineHeight="1.3"
                   >
                     주제만 입력하면 다양한 SNS 콘텐츠 자동 생성
                   </Text>
@@ -125,28 +128,31 @@ export default function HomePage() {
 
               {/* 자동 스케줄링 */}
               <Card 
-                minW={{ base: "100px", md: "280px" }}
-                maxW={{ base: "100px", md: "280px" }}
                 shadow="sm"
                 borderRadius="lg"
+                h="full"
               >
                 <CardBody 
                   textAlign="center" 
-                  py={{ base: 3, md: 6 }} 
-                  px={{ base: 2, md: 4 }}
+                  py={{ base: 3, sm: 4, md: 6 }} 
+                  px={{ base: 1, sm: 2, md: 4 }}
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="center"
                 >
-                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>⏰</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>⏰</Text>
                   <Text 
-                    fontSize={{ base: "xs", md: "md" }}
+                    fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
-                    mb={{ base: 1, md: 2 }}
+                    mb={{ base: 0.5, md: 2 }}
                   >
                     스케줄링
                   </Text>
                   <Text 
                     color="gray.600" 
-                    fontSize={{ base: "2xs", md: "sm" }}
-                    display={{ base: "none", md: "block" }}
+                    fontSize={{ base: "3xs", sm: "2xs", md: "sm" }}
+                    display={{ base: "none", sm: "block" }}
+                    lineHeight="1.3"
                   >
                     원하는 시간에 자동으로 콘텐츠 생성
                   </Text>
@@ -155,34 +161,37 @@ export default function HomePage() {
 
               {/* 창의성 조절 */}
               <Card 
-                minW={{ base: "100px", md: "280px" }}
-                maxW={{ base: "100px", md: "280px" }}
                 shadow="sm"
                 borderRadius="lg"
+                h="full"
               >
                 <CardBody 
                   textAlign="center" 
-                  py={{ base: 3, md: 6 }} 
-                  px={{ base: 2, md: 4 }}
+                  py={{ base: 3, sm: 4, md: 6 }} 
+                  px={{ base: 1, sm: 2, md: 4 }}
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="center"
                 >
-                  <Text fontSize={{ base: "xl", md: "2xl" }} mb={1}>🎨</Text>
+                  <Text fontSize={{ base: "lg", sm: "xl", md: "2xl" }} mb={1}>🎨</Text>
                   <Text 
-                    fontSize={{ base: "xs", md: "md" }}
+                    fontSize={{ base: "2xs", sm: "xs", md: "md" }}
                     fontWeight="bold"
-                    mb={{ base: 1, md: 2 }}
+                    mb={{ base: 0.5, md: 2 }}
                   >
                     창의성
                   </Text>
                   <Text 
                     color="gray.600" 
-                    fontSize={{ base: "2xs", md: "sm" }}
-                    display={{ base: "none", md: "block" }}
+                    fontSize={{ base: "3xs", sm: "2xs", md: "sm" }}
+                    display={{ base: "none", sm: "block" }}
+                    lineHeight="1.3"
                   >
                     4단계 레벨로 콘텐츠 다양성 조절
                   </Text>
                 </CardBody>
               </Card>
-            </HStack>
+            </SimpleGrid>
           </Box>
         </VStack>
       </Container>

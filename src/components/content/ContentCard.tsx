@@ -95,18 +95,27 @@ export default function ContentCard({
 
 
   return (
-    <Card>
+    <Card 
+      cursor="pointer"
+      transition="all 0.2s"
+      _hover={{ 
+        transform: 'translateY(-2px)', 
+        boxShadow: 'lg',
+        borderColor: 'blue.200'
+      }}
+      onClick={() => onEdit?.(content)}
+    >
       <CardHeader pb={2}>
         <HStack justify="space-between">
-          <VStack align="start" spacing={1}>
-            <Text fontWeight="bold" fontSize="md" noOfLines={1}>
+          <VStack align="start" spacing={1} flex={1}>
+            <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }} noOfLines={1}>
               {content.title}
             </Text>
-            <HStack spacing={2}>
-              <Badge colorScheme={getContentTypeColor(content.content_type)} size="sm">
+            <HStack spacing={1} flexWrap="wrap">
+              <Badge colorScheme={getContentTypeColor(content.content_type)} size="sm" fontSize={{ base: "2xs", md: "xs" }}>
                 {content.content_type.replace('_', ' ').toUpperCase()}
               </Badge>
-              <Badge colorScheme={getStatusColor(content.status)} size="sm">
+              <Badge colorScheme={getStatusColor(content.status)} size="sm" fontSize={{ base: "2xs", md: "xs" }}>
                 {content.status.toUpperCase()}
               </Badge>
             </HStack>
@@ -118,6 +127,7 @@ export default function ContentCard({
               icon={<MoreVertical size={16} />}
               variant="ghost"
               size="sm"
+              onClick={(e) => e.stopPropagation()}
             />
             <MenuList>
               <MenuItem onClick={() => handleAction('view')}>
@@ -147,13 +157,13 @@ export default function ContentCard({
         </HStack>
       </CardHeader>
       
-      <CardBody pt={0}>
-        <Text fontSize="sm" color="gray.600" noOfLines={3} mb={3}>
+      <CardBody pt={0} px={{ base: 2, md: 4 }}>
+        <Text fontSize={{ base: "xs", md: "sm" }} color="gray.600" noOfLines={{ base: 2, md: 3 }} mb={{ base: 2, md: 3 }}>
           {content.content}
         </Text>
         
         <VStack align="start" spacing={1}>
-          <Text fontSize="xs" color="gray.500">
+          <Text fontSize={{ base: "2xs", md: "xs" }} color="gray.500">
             Created: {new Date(content.created_at).toLocaleDateString()}
           </Text>
           {content.scheduled_at && (

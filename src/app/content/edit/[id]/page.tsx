@@ -1,0 +1,314 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import {
+  Box,
+  Container,
+  VStack,
+  HStack,
+  Heading,
+  Text,
+  Button,
+  Textarea,
+  Input,
+  Select,
+  useToast,
+  IconButton,
+  Tooltip,
+  Badge,
+  Card,
+  CardBody,
+  Divider,
+  Flex,
+  Spacer,
+} from '@chakra-ui/react'
+import { ArrowLeftIcon, CopyIcon, CheckIcon, SaveIcon } from '@chakra-ui/icons'
+import Layout from '@/components/layout/Layout'
+import { Content } from '@/types'
+import { useContents } from '@/hooks/useContents'
+import { CONTENT_TYPE_LABELS } from '@/utils/constants'
+
+export default function EditContentPage() {
+  const router = useRouter()
+  const params = useParams()
+  const toast = useToast()
+  const { fetchContent, updateContent } = useContents()
+  
+  const [content, setContent] = useState<Content | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [copied, setCopied] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    topic: '',
+    tone: '',
+    status: 'draft',
+  })
+
+  useEffect(() => {
+    loadContent()
+  }, [params.id])
+
+  const loadContent = async () => {
+    if (!params.id) return
+    
+    setLoading(true)
+    try {
+      const data = await fetchContent(params.id as string)
+      if (data) {
+        setContent(data)
+        setFormData({
+          title: data.title || '',
+          content: data.content || '',
+          topic: data.topic || '',
+          tone: data.tone || '',
+          status: data.status || 'draft',
+        })
+      }
+    } catch (error) {
+      console.error('Failed to load content:', error)
+      toast({
+        title: '콘텐츠 로드 실패',
+        description: '콘텐츠를 불러오는데 실패했습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCopyContent = () => {
+    if (formData.content) {
+      navigator.clipboard.writeText(formData.content)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+      toast({
+        title: '복사 완료',
+        description: '콘텐츠가 클립보드에 복사되었습니다.',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      })
+    }
+  }
+
+  const handleSave = async () => {
+    if (!content) return
+    
+    setSaving(true)
+    try {
+      await updateContent(content.id, formData)
+      toast({
+        title: '저장 완료',
+        description: '콘텐츠가 성공적으로 저장되었습니다.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
+      router.push('/content/library')
+    } catch (error) {
+      console.error('Failed to save content:', error)
+      toast({
+        title: '저장 실패',
+        description: '콘텐츠 저장에 실패했습니다.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <Container maxW="5xl" py={8}>
+          <VStack spacing={4}>
+            <Text>콘텐츠를 불러오는 중...</Text>
+          </VStack>
+        </Container>
+      </Layout>
+    )
+  }
+
+  if (!content) {
+    return (
+      <Layout>
+        <Container maxW="5xl" py={8}>
+          <VStack spacing={4}>
+            <Text>콘텐츠를 찾을 수 없습니다.</Text>
+            <Button onClick={() => router.push('/content/library')}>
+              라이브러리로 돌아가기
+            </Button>
+          </VStack>
+        </Container>
+      </Layout>
+    )
+  }
+
+  return (
+    <Layout>
+      <Container maxW="5xl" py={8}>
+        <VStack spacing={6} align="stretch">
+          {/* Header */}
+          <Flex align="center">
+            <HStack spacing={4}>
+              <IconButton
+                icon={<ArrowLeftIcon />}
+                aria-label="뒤로가기"
+                variant="ghost"
+                onClick={() => router.push('/content/library')}
+              />
+              <VStack align="start" spacing={1}>
+                <Heading size="lg">콘텐츠 편집</Heading>
+                <HStack spacing={2}>
+                  <Badge colorScheme="blue">
+                    {CONTENT_TYPE_LABELS[content.content_type as keyof typeof CONTENT_TYPE_LABELS] || content.content_type}
+                  </Badge>
+                  <Badge colorScheme="green">
+                    {content.tone}
+                  </Badge>
+                  <Text fontSize="sm" color="gray.500">
+                    생성: {new Date(content.created_at).toLocaleDateString('ko-KR')}
+                  </Text>
+                </HStack>
+              </VStack>
+            </HStack>
+            <Spacer />
+            <HStack spacing={3}>
+              <Tooltip label={copied ? '복사됨!' : '콘텐츠 복사'}>
+                <Button
+                  leftIcon={copied ? <CheckIcon /> : <CopyIcon />}
+                  onClick={handleCopyContent}
+                  variant="outline"
+                  colorScheme={copied ? 'green' : 'gray'}
+                >
+                  {copied ? '복사됨' : '복사'}
+                </Button>
+              </Tooltip>
+              <Button
+                leftIcon={<SaveIcon />}
+                colorScheme="brand"
+                onClick={handleSave}
+                isLoading={saving}
+                loadingText="저장 중..."
+              >
+                저장
+              </Button>
+            </HStack>
+          </Flex>
+
+          <Divider />
+
+          {/* Content Form */}
+          <Card>
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                {/* Title */}
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>제목</Text>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) => handleChange('title', e.target.value)}
+                    placeholder="콘텐츠 제목을 입력하세요"
+                    size="lg"
+                  />
+                </Box>
+
+                {/* Topic */}
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>주제</Text>
+                  <Input
+                    value={formData.topic}
+                    onChange={(e) => handleChange('topic', e.target.value)}
+                    placeholder="콘텐츠 주제"
+                  />
+                </Box>
+
+                {/* Tone */}
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>톤</Text>
+                  <Select
+                    value={formData.tone}
+                    onChange={(e) => handleChange('tone', e.target.value)}
+                  >
+                    <option value="professional">전문적</option>
+                    <option value="casual">캐주얼</option>
+                    <option value="friendly">친근함</option>
+                    <option value="formal">격식있는</option>
+                    <option value="humorous">유머러스</option>
+                  </Select>
+                </Box>
+
+                {/* Status */}
+                <Box>
+                  <Text fontWeight="semibold" mb={2}>상태</Text>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => handleChange('status', e.target.value)}
+                  >
+                    <option value="draft">임시저장</option>
+                    <option value="published">발행됨</option>
+                    <option value="scheduled">예약됨</option>
+                    <option value="archived">보관됨</option>
+                  </Select>
+                </Box>
+
+                {/* Content */}
+                <Box>
+                  <Flex mb={2} align="center">
+                    <Text fontWeight="semibold">콘텐츠</Text>
+                    <Spacer />
+                    <Text fontSize="sm" color="gray.500">
+                      {formData.content.length}자
+                    </Text>
+                  </Flex>
+                  <Textarea
+                    value={formData.content}
+                    onChange={(e) => handleChange('content', e.target.value)}
+                    placeholder="콘텐츠 내용을 입력하세요"
+                    rows={15}
+                    resize="vertical"
+                    fontSize="md"
+                  />
+                </Box>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Actions */}
+          <HStack justify="flex-end" spacing={3}>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/content/library')}
+            >
+              취소
+            </Button>
+            <Button
+              leftIcon={<SaveIcon />}
+              colorScheme="brand"
+              onClick={handleSave}
+              isLoading={saving}
+              loadingText="저장 중..."
+            >
+              저장하기
+            </Button>
+          </HStack>
+        </VStack>
+      </Container>
+    </Layout>
+  )
+}

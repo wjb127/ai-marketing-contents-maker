@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
-import { getScheduledPromptTemplate } from '@/utils/prompt-templates'
+import { getDatabasePromptTemplate } from '@/utils/db-prompt-templates'
 import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 // 완전히 새로운 v2 API - 안전한 구조로 재작성
@@ -84,7 +84,8 @@ async function handler(request: NextRequest) {
       if (promptSettings.promptType === 'custom' && promptSettings.customPrompt) {
         prompt = promptSettings.customPrompt
       } else {
-        prompt = getScheduledPromptTemplate(
+        // DB에서 프롬프트 템플릿 가져오기 (콘텐츠 생성과 동일)
+        prompt = await getDatabasePromptTemplate(
           schedule.content_type,
           schedule.content_tone || 'casual',
           schedule.topics?.[0] || schedule.topic || '일반 주제',

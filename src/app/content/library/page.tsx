@@ -131,16 +131,8 @@ export default function ContentLibraryPage() {
   }
 
   const handleEdit = (content: Content) => {
-    setSelectedContent(content)
-    setEditFormData({
-      title: content.title || '',
-      content: content.content || '',
-      content_type: content.content_type || '',
-      tone: content.tone || '',
-      topic: content.topic || '',
-      status: content.status || 'draft'
-    })
-    onEditOpen()
+    // 편집 페이지로 이동
+    router.push(`/content/edit/${content.id}`)
   }
 
   const handleSaveEdit = async () => {
@@ -393,7 +385,7 @@ export default function ContentLibraryPage() {
               <Text fontSize="sm" color="gray.600">
                 전체 {contents.length}개 중 {filteredContents.length}개 표시
               </Text>
-              <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+              <SimpleGrid columns={{ base: 2, md: 2, lg: 3, xl: 4 }} spacing={{ base: 3, md: 4, lg: 6 }}>
                 {filteredContents.map((content) => (
                   <ContentCard
                     key={content.id}

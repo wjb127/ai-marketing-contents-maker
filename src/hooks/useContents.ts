@@ -295,6 +295,30 @@ export function useContents() {
     }
   }
 
+  const fetchContent = async (contentId: string): Promise<Content | null> => {
+    try {
+      // Supabase에서 단일 콘텐츠 가져오기
+      const { data, error } = await supabase
+        .from('contents')
+        .select('*')
+        .eq('id', contentId)
+        .single()
+
+      if (error) {
+        console.error('❌ Error fetching content:', error)
+        // Mock 데이터에서 찾기
+        const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
+        if (mockContent) return mockContent
+        throw error
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ Error fetching content:', error)
+      return null
+    }
+  }
+
   return {
     contents,
     loading,
@@ -303,6 +327,7 @@ export function useContents() {
     saveContent,
     deleteContent,
     updateContent,
+    fetchContent,
     refetch: fetchContents
   }
 }
