@@ -1,4 +1,10 @@
-import { calculateNextRun } from '@/lib/qstash'
+// Mock QStash dependencies to avoid import issues
+jest.mock('@upstash/qstash', () => ({
+  Client: jest.fn(),
+}))
+
+// Import after mocking
+const { calculateNextRun } = require('@/lib/qstash')
 
 describe('QStash Scheduling Functions', () => {
   describe('calculateNextRun', () => {

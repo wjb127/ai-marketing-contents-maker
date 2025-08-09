@@ -74,7 +74,17 @@ function getTemplateNameFromContentType(contentType: ContentType): string {
     'youtube_script': 'YouTube 스크립트 기본 템플릿',
     'instagram_reel_script': '인스타그램 릴 기본 템플릿',
     'linkedin_post': 'LinkedIn 포스트 기본 템플릿',
-    'facebook_post': 'Facebook 포스트 기본 템플릿'
+    'facebook_post': 'Facebook 포스트 기본 템플릿',
+    'hook_empathy_solution': 'Hook-공감-해결-CTA 템플릿',
+    'before_after': 'Before/After 대비 템플릿',
+    'story_telling': '스토리텔링 템플릿',
+    'listicle': '리스티클 템플릿',
+    'hero_journey': '영웅 서사 템플릿',
+    'myth_buster': '통념 깨기 템플릿',
+    'comparison': 'A vs B 비교 템플릿',
+    'emotional_empathy': '감정 공감 템플릿',
+    'provocative_question': '도발적 질문 템플릿',
+    'fact_bombardment': '팩트 폭격 템플릿'
   }
 
   return templateMapping[contentType] || 'X 포스트 기본 템플릿'

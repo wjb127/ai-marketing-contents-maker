@@ -239,43 +239,56 @@ export default function ContentLibraryPage() {
               <Heading size="xl" mb={2} color="gray.800">
                 📚 콘텐츠 라이브러리
               </Heading>
-              <Text color="gray.600" fontSize="lg">
+              <Text color="gray.600" fontSize={{ base: "md", md: "lg" }}>
                 AI로 생성된 모든 콘텐츠를 한 곳에서 관리하세요
               </Text>
-              <HStack spacing={4} mt={2} fontSize="sm" color="gray.500">
-                <Text>전체: {stats.total}개</Text>
-                <Text>발행: {stats.published}개</Text>
-                <Text>임시저장: {stats.draft}개</Text>
-                <Text>예약: {stats.scheduled}개</Text>
-                <Text>자동생성: {stats.auto_generated}개</Text>
-              </HStack>
+              <SimpleGrid 
+                columns={{ base: 2, sm: 3, md: 5 }} 
+                spacing={{ base: 2, md: 4 }} 
+                mt={2} 
+                fontSize={{ base: "xs", md: "sm" }} 
+                color="gray.500"
+              >
+                <Text whiteSpace="nowrap">전체: {stats.total}개</Text>
+                <Text whiteSpace="nowrap">발행: {stats.published}개</Text>
+                <Text whiteSpace="nowrap">임시저장: {stats.draft}개</Text>
+                <Text whiteSpace="nowrap">예약: {stats.scheduled}개</Text>
+                <Text whiteSpace="nowrap">자동생성: {stats.auto_generated}개</Text>
+              </SimpleGrid>
             </Box>
             <Spacer />
-            <HStack spacing={3}>
-              <Button
-                leftIcon={<RepeatIcon />}
-                variant="outline"
-                onClick={handleRefresh}
-                isLoading={refreshing}
-                size={{ base: 'md', md: 'lg' }}
-              >
-                새로고침
-              </Button>
-              <Button
-                leftIcon={<AddIcon />}
-                colorScheme="brand"
-                onClick={() => router.push('/content/create')}
-                size={{ base: 'md', md: 'lg' }}
-                shadow="sm"
-              >
-                새 콘텐츠 만들기
-              </Button>
-            </HStack>
+            <VStack spacing={{ base: 2, md: 0 }} align="stretch">
+              <HStack spacing={3} justify={{ base: "stretch", md: "flex-end" }}>
+                <Button
+                  leftIcon={<RepeatIcon />}
+                  variant="outline"
+                  onClick={handleRefresh}
+                  isLoading={refreshing}
+                  size={{ base: 'sm', md: 'md' }}
+                  flex={{ base: 1, md: "none" }}
+                  fontSize={{ base: "xs", md: "sm" }}
+                >
+                  새로고침
+                </Button>
+                <Button
+                  leftIcon={<AddIcon />}
+                  colorScheme="brand"
+                  onClick={() => router.push('/content/create')}
+                  size={{ base: 'sm', md: 'md' }}
+                  flex={{ base: 1, md: "none" }}
+                  shadow="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
+                >
+                  새 콘텐츠 만들기
+                </Button>
+              </HStack>
+            </VStack>
           </Flex>
 
           {/* Filters */}
-          <HStack spacing={4} wrap="wrap">
-            <InputGroup maxW="300px">
+          <VStack spacing={4} align="stretch">
+            {/* Search Bar - Full Width */}
+            <InputGroup maxW={{ base: "100%", md: "400px" }}>
               <InputLeftElement pointerEvents="none">
                 <SearchIcon color="gray.300" />
               </InputLeftElement>
@@ -283,58 +296,73 @@ export default function ContentLibraryPage() {
                 placeholder="콘텐츠 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                bg="white"
+                borderRadius="md"
               />
             </InputGroup>
             
-            <Select
-              placeholder="모든 타입"
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              maxW="200px"
-            >
-              {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-            
-            <Select
-              placeholder="모든 상태"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              maxW="200px"
-            >
-              <option value="published">발행됨</option>
-              <option value="draft">임시저장</option>
-              <option value="scheduled">예약됨</option>
-              <option value="archived">보관됨</option>
-            </Select>
-            
-            <Select
-              placeholder="모든 소스"
-              value={filterSource}
-              onChange={(e) => setFilterSource(e.target.value)}
-              maxW="200px"
-            >
-              <option value="manual">직접 생성</option>
-              <option value="scheduled">스케줄 자동생성</option>
-            </Select>
-            
-            {(searchTerm || filterType !== 'all' || filterStatus !== 'all' || filterSource !== 'all') && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSearchTerm('')
-                  setFilterType('all')
-                  setFilterStatus('all')
-                  setFilterSource('all')
-                }}
+            {/* Filter Selects - Mobile Grid */}
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
+              <Select
+                placeholder="모든 타입"
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                bg="white"
+                fontSize={{ base: "sm", md: "md" }}
+                size={{ base: "sm", md: "md" }}
               >
-                필터 초기화
-              </Button>
-            )}
-          </HStack>
+                {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+              
+              <Select
+                placeholder="모든 상태"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                bg="white"
+                fontSize={{ base: "sm", md: "md" }}
+                size={{ base: "sm", md: "md" }}
+              >
+                <option value="published">발행됨</option>
+                <option value="draft">임시저장</option>
+                <option value="scheduled">예약됨</option>
+                <option value="archived">보관됨</option>
+              </Select>
+              
+              <Select
+                placeholder="모든 소스"
+                value={filterSource}
+                onChange={(e) => setFilterSource(e.target.value)}
+                bg="white"
+                fontSize={{ base: "sm", md: "md" }}
+                size={{ base: "sm", md: "md" }}
+              >
+                <option value="manual">직접 생성</option>
+                <option value="scheduled">자동생성</option>
+              </Select>
+              
+              {/* Filter Reset Button */}
+              {(searchTerm || filterType !== 'all' || filterStatus !== 'all' || filterSource !== 'all') && (
+                <Button
+                  variant="outline"
+                  size={{ base: "sm", md: "md" }}
+                  fontSize={{ base: "sm", md: "md" }}
+                  onClick={() => {
+                    setSearchTerm('')
+                    setFilterType('all')
+                    setFilterStatus('all')
+                    setFilterSource('all')
+                  }}
+                  colorScheme="gray"
+                >
+                  초기화
+                </Button>
+              )}
+            </SimpleGrid>
+          </VStack>
 
           {/* Content Grid */}
           {loading ? (

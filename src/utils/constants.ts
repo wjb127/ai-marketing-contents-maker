@@ -6,6 +6,16 @@ export const CONTENT_TYPES = {
   INSTAGRAM_REEL_SCRIPT: 'instagram_reel_script',
   LINKEDIN_POST: 'linkedin_post',
   FACEBOOK_POST: 'facebook_post',
+  HOOK_EMPATHY_SOLUTION: 'hook_empathy_solution',
+  BEFORE_AFTER: 'before_after',
+  STORY_TELLING: 'story_telling',
+  LISTICLE: 'listicle',
+  HERO_JOURNEY: 'hero_journey',
+  MYTH_BUSTER: 'myth_buster',
+  COMPARISON: 'comparison',
+  EMOTIONAL_EMPATHY: 'emotional_empathy',
+  PROVOCATIVE_QUESTION: 'provocative_question',
+  FACT_BOMBARDMENT: 'fact_bombardment',
 } as const
 
 export const CONTENT_TYPE_LABELS = {
@@ -16,6 +26,16 @@ export const CONTENT_TYPE_LABELS = {
   [CONTENT_TYPES.INSTAGRAM_REEL_SCRIPT]: 'Instagram Reel Script',
   [CONTENT_TYPES.LINKEDIN_POST]: 'LinkedIn Post',
   [CONTENT_TYPES.FACEBOOK_POST]: 'Facebook Post',
+  [CONTENT_TYPES.HOOK_EMPATHY_SOLUTION]: 'Hook-공감-해결-CTA',
+  [CONTENT_TYPES.BEFORE_AFTER]: 'Before/After 대비',
+  [CONTENT_TYPES.STORY_TELLING]: '스토리텔링',
+  [CONTENT_TYPES.LISTICLE]: '리스티클 (숫자 활용)',
+  [CONTENT_TYPES.HERO_JOURNEY]: '영웅 서사',
+  [CONTENT_TYPES.MYTH_BUSTER]: '통념 깨기',
+  [CONTENT_TYPES.COMPARISON]: 'A vs B 비교',
+  [CONTENT_TYPES.EMOTIONAL_EMPATHY]: '감정 공감',
+  [CONTENT_TYPES.PROVOCATIVE_QUESTION]: '도발적 질문',
+  [CONTENT_TYPES.FACT_BOMBARDMENT]: '팩트 폭격',
 } as const
 
 export const TONES = {
@@ -181,6 +201,66 @@ export const CONTENT_TYPE_SPECS = {
     recommendedHashtags: 3,
     structure: 'social_post',
     description: 'Facebook social media post',
+  },
+  [CONTENT_TYPES.HOOK_EMPATHY_SOLUTION]: {
+    maxLength: 1000,
+    recommendedHashtags: 2,
+    structure: 'hook_empathy_cta',
+    description: 'Hook → 공감 → 해결 → CTA 구조의 콘텐츠',
+  },
+  [CONTENT_TYPES.BEFORE_AFTER]: {
+    maxLength: 800,
+    recommendedHashtags: 2,
+    structure: 'before_after_comparison',
+    description: 'Before/After 형식의 시각적 대비 콘텐츠',
+  },
+  [CONTENT_TYPES.STORY_TELLING]: {
+    maxLength: 1200,
+    recommendedHashtags: 2,
+    structure: 'narrative_story',
+    description: '실패→깨달음→성공의 여정을 담은 서사적 콘텐츠',
+  },
+  [CONTENT_TYPES.LISTICLE]: {
+    maxLength: 1000,
+    recommendedHashtags: 3,
+    structure: 'numbered_list',
+    description: '숫자를 활용한 리스트 형식의 콘텐츠',
+  },
+  [CONTENT_TYPES.HERO_JOURNEY]: {
+    maxLength: 1000,
+    recommendedHashtags: 2,
+    structure: 'hero_journey',
+    description: '평범한 사람이 특별해지는 영웅의 여정 구조',
+  },
+  [CONTENT_TYPES.MYTH_BUSTER]: {
+    maxLength: 900,
+    recommendedHashtags: 2,
+    structure: 'myth_debunking',
+    description: '잘못된 상식을 바로잡는 교육적 콘텐츠',
+  },
+  [CONTENT_TYPES.COMPARISON]: {
+    maxLength: 800,
+    recommendedHashtags: 2,
+    structure: 'a_vs_b_comparison',
+    description: '두 가지 선택지를 비교하는 대비 콘텐츠',
+  },
+  [CONTENT_TYPES.EMOTIONAL_EMPATHY]: {
+    maxLength: 1000,
+    recommendedHashtags: 1,
+    structure: 'emotional_support',
+    description: '독자의 감정에 깊이 공감하는 위로와 격려 콘텐츠',
+  },
+  [CONTENT_TYPES.PROVOCATIVE_QUESTION]: {
+    maxLength: 900,
+    recommendedHashtags: 2,
+    structure: 'provocative_motivation',
+    description: '독자를 자극하는 질문으로 동기부여하는 콘텐츠',
+  },
+  [CONTENT_TYPES.FACT_BOMBARDMENT]: {
+    maxLength: 600,
+    recommendedHashtags: 2,
+    structure: 'fact_list',
+    description: '짧고 임팩트 있는 사실들을 나열하는 간결한 콘텐츠',
   },
 } as const
 

@@ -12,6 +12,20 @@ process.env.NEXT_PUBLIC_URL = 'http://localhost:3000'
 // Mock fetch globally
 global.fetch = jest.fn()
 
+// Set Node.js environment for Anthropic SDK
+Object.defineProperty(globalThis, 'process', {
+  value: process,
+})
+
+// Mock web APIs for server environment
+Object.defineProperty(globalThis, 'window', {
+  value: undefined,
+})
+
+Object.defineProperty(globalThis, 'navigator', {
+  value: undefined,
+})
+
 // Mock Supabase client
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({

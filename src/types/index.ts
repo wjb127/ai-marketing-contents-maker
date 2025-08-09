@@ -17,6 +17,16 @@ export type ContentType =
   | 'instagram_reel_script'
   | 'linkedin_post'
   | 'facebook_post'
+  | 'hook_empathy_solution'
+  | 'before_after'
+  | 'story_telling'
+  | 'listicle'
+  | 'hero_journey'
+  | 'myth_buster'
+  | 'comparison'
+  | 'emotional_empathy'
+  | 'provocative_question'
+  | 'fact_bombardment'
 
 export type ContentTone = 
   | 'professional' 
