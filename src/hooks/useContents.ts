@@ -134,29 +134,48 @@ export function useContents() {
     if (!user) throw new Error('User not authenticated')
 
     try {
-      console.log('💾 Saving content to database')
+      console.log('💾 [SAVE] Starting content save process...')
+      console.log('💾 [SAVE] Input data:', {
+        content_length: contentData.content?.length || 0,
+        content_type: contentData.content_type,
+        tone: contentData.tone,
+        topic: contentData.topic,
+        status: contentData.status,
+        user_id: user.id
+      })
       
-      // DB에 콘텐츠 저장
+      const savePayload = {
+        user_id: user.id,
+        content: contentData.content,
+        prompt: `content_type: ${contentData.content_type}\ntone: ${contentData.tone}\ntopic: ${contentData.topic}`,
+        status: (contentData.status as ContentStatus) || 'draft'
+      }
+      
+      console.log('💾 [SAVE] Payload to database:', savePayload)
+      
+      // DB에 콘텐츠 저장 (완전 단순화)
       const { data: newContent, error: saveError } = await supabase
         .from('contents')
-        .insert({
-          user_id: user.id,
-          title: contentData.title || `${contentData.topic} - ${new Date().toLocaleDateString('ko-KR')}`,
-          content: contentData.content,
-          content_type: contentData.content_type,
-          tone: contentData.tone,
-          status: (contentData.status as ContentStatus) || 'draft',
-          topic: contentData.topic
-        })
+        .insert(savePayload)
         .select()
         .single()
 
       if (saveError) {
-        console.error('❌ Database save error:', saveError)
+        console.error('❌ [SAVE] Database save error:', {
+          error: saveError,
+          code: saveError.code,
+          message: saveError.message,
+          details: saveError.details,
+          hint: saveError.hint
+        })
         throw new Error(saveError.message)
       }
 
-      console.log('✅ Content saved to database:', newContent.id)
+      console.log('✅ [SAVE] Content saved successfully:', {
+        id: newContent.id,
+        created_at: newContent.created_at,
+        content_length: newContent.content?.length || 0
+      })
       
       // 로컬 상태 업데이트
       setContents(prev => [newContent, ...prev])
