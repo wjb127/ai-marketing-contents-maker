@@ -147,7 +147,9 @@ export function useContents() {
       const savePayload = {
         user_id: user.id,
         content: contentData.content,
-        prompt: `content_type: ${contentData.content_type}\ntone: ${contentData.tone}\ntopic: ${contentData.topic}`,
+        type: contentData.content_type,  // dogfooding schema uses 'type' column
+        tone: contentData.tone,
+        topic: contentData.topic,
         status: (contentData.status as ContentStatus) || 'draft'
       }
       

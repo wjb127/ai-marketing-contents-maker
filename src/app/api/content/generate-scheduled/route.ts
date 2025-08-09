@@ -127,8 +127,7 @@ async function handler(request: NextRequest) {
         .from('contents')
         .insert({
           user_id: schedule.user_id,
-          title: `${schedule.name || 'Untitled'} - v2 자동생성`,
-          content_type: schedule.content_type,
+          type: schedule.content_type,  // dogfooding schema uses 'type'
           tone: schedule.content_tone || 'casual',
           topic: schedule.topics?.[0] || schedule.topic || '일반 주제',
           content: generatedContent,

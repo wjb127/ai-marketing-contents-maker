@@ -109,14 +109,14 @@ export default function ContentCard({
         <HStack justify="space-between">
           <VStack align="start" spacing={1} flex={1}>
             <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }} noOfLines={1}>
-              {content.title}
+              {content.title || 'AI 생성 콘텐츠'}
             </Text>
             <HStack spacing={1} flexWrap="wrap">
-              <Badge colorScheme={getContentTypeColor(content.content_type)} size="sm" fontSize={{ base: "2xs", md: "xs" }}>
-                {content.content_type.replace('_', ' ').toUpperCase()}
+              <Badge colorScheme={getContentTypeColor(content.content_type || content.type)} size="sm" fontSize={{ base: "2xs", md: "xs" }}>
+                {(content.content_type || content.type) ? (content.content_type || content.type).replace('_', ' ').toUpperCase() : 'UNKNOWN'}
               </Badge>
               <Badge colorScheme={getStatusColor(content.status)} size="sm" fontSize={{ base: "2xs", md: "xs" }}>
-                {content.status.toUpperCase()}
+                {content.status ? content.status.toUpperCase() : 'UNKNOWN'}
               </Badge>
             </HStack>
           </VStack>

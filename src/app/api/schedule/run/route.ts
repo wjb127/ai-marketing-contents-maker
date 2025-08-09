@@ -106,9 +106,8 @@ export async function POST(request: NextRequest) {
     // 콘텐츠 저장 (dogfooding 환경에 맞게 수정)
     const contentData: any = {
       user_id: schedule.user_id,
-      title: schedule.name,
       content: generatedContent,
-      content_type: schedule.content_type,  // content_type 컬럼만 사용
+      type: schedule.content_type,  // dogfooding schema uses 'type' column
       tone: schedule.tone || schedule.content_tone || 'professional',
       topic: schedule.topics?.[0] || schedule.topic || '',
       status: 'draft',
@@ -126,7 +125,14 @@ export async function POST(request: NextRequest) {
     if (contentError) {
       console.error('❌ Failed to save content - Error details:', JSON.stringify(contentError, null, 2))
       console.error('❌ Content data that failed:', JSON.stringify(contentData, null, 2))
-      throw contentError
+      console.error('❌ Schedule data:', JSON.stringify({
+        id: schedule.id,
+        user_id: schedule.user_id,
+        content_type: schedule.content_type,
+        tone: schedule.tone,
+        content_tone: schedule.content_tone
+      }, null, 2))
+      throw new Error(`콘텐츠 저장 실패: ${contentError.message} (code: ${contentError.code})`)
     }
 
     if (!savedContent) {

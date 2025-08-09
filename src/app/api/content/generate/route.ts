@@ -60,22 +60,36 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Content generated successfully')
     
-    // Save content to database (ultra simple)
+    // Save content to database (dogfooding schema)
     const { data: contentData, error: contentError } = await supabase
       .from('contents')
       .insert({
         user_id: user.id,
         content: generatedContent,
-        prompt: prompt,
+        type: requestData.type || 'x_post',
+        tone: requestData.tone || 'professional',
+        topic: requestData.topic || '일반 주제',
         status: 'draft'
       })
       .select()
       .single()
 
     if (contentError) {
-      console.error('Error saving content:', contentError)
+      console.error('❌ Failed to save content - Error details:', JSON.stringify(contentError, null, 2))
+      console.error('❌ Insert data that failed:', JSON.stringify({
+        user_id: user.id,
+        content: generatedContent.substring(0, 100) + '...',
+        type: requestData.type || 'x_post',
+        tone: requestData.tone || 'professional',
+        topic: requestData.topic || '일반 주제',
+        status: 'draft'
+      }, null, 2))
       return NextResponse.json(
-        { error: 'Failed to save generated content' },
+        { 
+          error: 'Failed to save generated content',
+          details: contentError.message,
+          code: contentError.code
+        },
         { status: 500 }
       )
     }
