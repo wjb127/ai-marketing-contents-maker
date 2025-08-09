@@ -297,6 +297,15 @@ export function useContents() {
 
   const fetchContent = async (contentId: string): Promise<Content | null> => {
     try {
+      console.log('🔍 Fetching single content:', contentId)
+      
+      // DOGFOODING MODE: Mock 데이터에서 먼저 확인
+      const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
+      if (mockContent) {
+        console.log('✅ Found in mock data:', mockContent.title)
+        return mockContent
+      }
+
       // Supabase에서 단일 콘텐츠 가져오기
       const { data, error } = await supabase
         .from('contents')
@@ -305,13 +314,11 @@ export function useContents() {
         .single()
 
       if (error) {
-        console.error('❌ Error fetching content:', error)
-        // Mock 데이터에서 찾기
-        const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
-        if (mockContent) return mockContent
-        throw error
+        console.error('❌ Error fetching content from DB:', error)
+        return null
       }
 
+      console.log('✅ Found in database:', data.title || data.id)
       return data
     } catch (error) {
       console.error('❌ Error fetching content:', error)
