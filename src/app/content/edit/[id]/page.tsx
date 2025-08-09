@@ -33,25 +33,6 @@ export default function EditContentPage() {
   const router = useRouter()
   const params = useParams()
   const toast = useToast()
-  // Mock data for testing
-  const MOCK_CONTENTS: Content[] = [
-    {
-      id: '1',
-      user_id: '00000000-0000-0000-0000-000000000001',
-      title: 'AI의 미래와 마케팅',
-      content: 'AI 기술이 마케팅 분야에 미치는 영향과 앞으로의 전망에 대해 알아보겠습니다. #AI #마케팅 #미래기술',
-      content_type: 'x_post',
-      tone: 'professional',
-      status: 'published',
-      topic: 'AI 마케팅',
-      tags: ['AI', '마케팅', '기술'],
-      word_count: 50,
-      published_at: '2024-01-15T10:00:00Z',
-      auto_generated: false,
-      created_at: '2024-01-15T09:30:00Z',
-      updated_at: '2024-01-15T10:00:00Z'
-    }
-  ]
 
   const supabase = createClientComponentClient()
 
@@ -59,14 +40,7 @@ export default function EditContentPage() {
     try {
       console.log('🔍 Fetching single content:', contentId)
       
-      // Mock 데이터에서 먼저 확인
-      const mockContent = MOCK_CONTENTS.find(c => c.id === contentId)
-      if (mockContent) {
-        console.log('✅ Found in mock data:', mockContent.title)
-        return mockContent
-      }
-
-      // Supabase에서 실제 콘텐츠 가져오기
+      // Supabase에서 콘텐츠 가져오기 (단일 데이터 소스)
       const { data, error } = await supabase
         .from('contents')
         .select('*')
@@ -90,13 +64,7 @@ export default function EditContentPage() {
     try {
       console.log('📝 Updating content:', contentId, updates)
       
-      // Mock 데이터는 로컬에서만 업데이트
-      if (MOCK_CONTENTS.find(c => c.id === contentId)) {
-        console.log('✅ Updated mock content locally')
-        return { ...MOCK_CONTENTS[0], ...updates }
-      }
-
-      // 실제 DB 업데이트
+      // Supabase DB 업데이트 (단일 데이터 소스)
       const { data: updatedContent, error } = await supabase
         .from('contents')
         .update({
