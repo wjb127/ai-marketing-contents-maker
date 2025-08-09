@@ -13,75 +13,42 @@ export async function POST(request: NextRequest) {
     // DOGFOODING MODE: Skip auth check
     const user = { id: '00000000-0000-0000-0000-000000000001' }
 
-    const { 
-      type,
-      topic, 
-      tone, 
-      target_audience,
-      additional_instructions,
-      creativityLevel = 'balanced',
-      temperature,
-      top_p
-    } = await request.json()
-
-    if (!topic || !type || !tone) {
-      return NextResponse.json(
-        { error: 'Type, topic, and tone are required' },
-        { status: 400 }
-      )
-    }
+    const requestData = await request.json()
+    
+    // Bundle all parameters into a single prompt string  
+    const prompt = Object.entries(requestData)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n')
 
     // DOGFOODING MODE: Skip subscription checks
     const monthlyCount = 0
 
-    // 데이터베이스에서 프롬프트 템플릿 가져오기
-    const startTime = Date.now()
-    const prompt = await getDatabasePromptTemplate(
-      type,
-      tone,
-      topic,
-      target_audience,
-      additional_instructions
-    )
-    const promptFetchTime = Date.now() - startTime
-
-    // 창의성 파라미터 설정
-    const creativitySettings = temperature && top_p ? {
-      temperature,
-      top_p
-    } : CREATIVITY_LEVELS[creativityLevel as keyof typeof CREATIVITY_LEVELS] || CREATIVITY_LEVELS.balanced
-
-    console.log('🤖 Generating content with database prompt template')
-    const generateStartTime = Date.now()
+    console.log('🤖 Generating content with simple prompt')
     
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
-      temperature: creativitySettings.temperature,
-      top_p: creativitySettings.top_p,
+      temperature: 0.7,
       messages: [
         {
           role: 'user',
-          content: prompt
+          content: `Create content based on these parameters:\n\n${prompt}\n\nGenerate high-quality content according to the specified requirements.`
         }
       ]
     })
 
-    const generateTime = Date.now() - generateStartTime
     const generatedContent = message.content[0]?.type === 'text' ? message.content[0].text : ''
     
-    console.log('✅ Content generated successfully using database prompt')
+    console.log('✅ Content generated successfully')
     
-    // Save content to database
+    // Save content to database (ultra simple)
     const { data: contentData, error: contentError } = await supabase
       .from('contents')
       .insert({
         user_id: user.id,
-        title: `${topic} - ${new Date().toLocaleDateString('ko-KR')}`,
-        content_type: type,
-        tone,
-        topic,
         content: generatedContent,
+        prompt: prompt,
         status: 'draft'
       })
       .select()
@@ -96,15 +63,6 @@ export async function POST(request: NextRequest) {
     }
 
     // DOGFOODING MODE: Skip updating user's monthly content count
-
-    // 자동 평가 수행 (백그라운드에서 실행)
-    try {
-      await evaluateAndSaveContent(contentData.id)
-      console.log('Content evaluation completed for:', contentData.id)
-    } catch (evaluationError) {
-      console.error('Failed to evaluate content automatically:', evaluationError)
-      // 평가 실패해도 콘텐츠 생성은 성공으로 처리
-    }
 
     return NextResponse.json(contentData)
   } catch (error) {

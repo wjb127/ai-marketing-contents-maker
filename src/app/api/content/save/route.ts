@@ -9,40 +9,22 @@ export async function POST(request: NextRequest) {
     // DOGFOODING MODE: Skip auth check
     const user = { id: '00000000-0000-0000-0000-000000000001' }
 
-    const { 
-      title,
-      content,
-      content_type,
-      tone,
-      topic,
-      status = 'draft',
-      target_audience,
-      additional_instructions,
-      tags = [],
-      word_count,
-      estimated_read_time
-    } = await request.json()
+    const { content, prompt, status = 'draft' } = await request.json()
 
-    if (!content || !content_type || !tone || !topic) {
+    if (!content || !prompt) {
       return NextResponse.json(
-        { error: 'Content, content_type, tone, and topic are required' },
+        { error: 'Content and prompt are required' },
         { status: 400 }
       )
     }
 
-    // Generate title if not provided
-    const contentTitle = title || `${topic} - ${new Date().toLocaleDateString('ko-KR')}`
-
-    // Save content to database
+    // Save content to database (ultra simple)
     const { data: contentData, error: contentError } = await supabase
       .from('contents')
       .insert({
         user_id: user.id,
-        title: contentTitle,
         content,
-        content_type,
-        tone,
-        topic,
+        prompt,
         status
       })
       .select()

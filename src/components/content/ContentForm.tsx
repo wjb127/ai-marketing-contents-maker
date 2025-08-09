@@ -31,6 +31,7 @@ import {
   CONTENT_TYPE_SPECS,
   CREATIVITY_LEVELS 
 } from '@/utils/constants'
+import { getFieldsForContentType } from '@/utils/content-type-fields'
 
 interface ContentFormProps {
   onSubmit?: (data: ContentFormData) => void
@@ -102,6 +103,23 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  // 콘텐츠 타입 변경 시 추가 요청사항에 템플릿 자동 생성
+  const handleContentTypeChange = (newContentType: ContentType) => {
+    const fields = getFieldsForContentType(newContentType)
+    
+    // 타입별 전용 필드가 있으면 추가 요청사항에 템플릿 생성 (한국어 라벨 포함)
+    let templateText = ''
+    if (fields.length > 0) {
+      templateText = fields.map(field => `${field.key} (${field.label}): ${field.placeholder}`).join('\n')
+    }
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      contentType: newContentType,
+      additionalNotes: templateText // 기존 내용을 템플릿으로 교체
+    }))
+  }
+
   const selectedContentSpec = CONTENT_TYPE_SPECS[formData.contentType]
 
   return (
@@ -126,7 +144,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               <FormLabel>콘텐츠 타입</FormLabel>
               <Select
                 value={formData.contentType}
-                onChange={(e) => handleInputChange('contentType', e.target.value as ContentType)}
+                onChange={(e) => handleContentTypeChange(e.target.value as ContentType)}
               >
                 {Object.entries(CONTENT_TYPE_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
