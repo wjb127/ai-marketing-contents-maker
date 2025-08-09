@@ -203,13 +203,24 @@ export default function SchedulePage() {
       return
     }
 
+    // 타겟 오디언스를 추가 지시사항에 통합
+    let combinedInstructions = formData.additionalInstructions || ''
+    if (formData.targetAudience && formData.targetAudience.trim()) {
+      const targetAudienceInstruction = `타겟 오디언스: ${formData.targetAudience.trim()}`
+      if (combinedInstructions.trim()) {
+        combinedInstructions = `${targetAudienceInstruction}\n\n${combinedInstructions}`
+      } else {
+        combinedInstructions = targetAudienceInstruction
+      }
+    }
+
     const promptData = {
       name: formData.name,
       topic: formData.topic,
       content_type: formData.contentType,
       tone: formData.tone,
-      target_audience: formData.targetAudience,
-      additional_instructions: formData.additionalInstructions,
+      target_audience: '', // 타겟 오디언스는 추가 지시사항에 포함시키므로 빈 값으로 설정
+      additional_instructions: combinedInstructions,
       prompt_type: formData.promptType,
       custom_prompt: formData.customPrompt,
       is_active: true
