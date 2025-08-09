@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { ContentType, ContentTone } from '@/types'
-import { CONTENT_TYPE_SPECS, CREATIVITY_LEVELS } from '@/utils/constants'
+import { CONTENT_TYPE_SPECS, CREATIVITY_LEVELS, getCharacterLimitPromptText } from '@/utils/constants'
 import { getDatabasePromptTemplate, logPromptUsage } from '@/utils/db-prompt-templates'
 import { evaluateAndSaveContent } from '@/lib/evaluation'
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
           role: 'user',
           content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
 - Write in Korean (한국어)
-- KEEP IT CONCISE: Maximum 500 characters including spaces (공백 포함 500자 이내)
+- KEEP IT CONCISE: ${getCharacterLimitPromptText(requestData.type || 'x_post')}
 - Write naturally like a human, avoid AI-like formatting
 - NO markdown syntax (no #, ##, **, -, •, etc.)
 - Use plain text with natural paragraph breaks
