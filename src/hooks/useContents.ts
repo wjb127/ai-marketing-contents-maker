@@ -62,7 +62,6 @@ export function useContents() {
     type: ContentType
     tone: ContentTone
     topic: string
-    target_audience?: string
     additional_instructions?: string
     creativityLevel?: string
     temperature?: number
@@ -128,8 +127,6 @@ export function useContents() {
     tone: ContentTone
     topic: string
     status?: string
-    target_audience?: string
-    additional_instructions?: string
     tags?: string[]
     word_count?: number
     estimated_read_time?: number

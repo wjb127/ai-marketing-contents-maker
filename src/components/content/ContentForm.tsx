@@ -43,7 +43,6 @@ export interface ContentFormData {
   tone: ContentTone
   length: string
   additionalNotes: string
-  targetAudience: string
   includeHashtags: boolean
   creativityLevel?: string
   temperature?: number
@@ -57,7 +56,6 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     tone: 'professional',
     length: 'medium',
     additionalNotes: '',
-    targetAudience: '',
     includeHashtags: true,
     creativityLevel: 'balanced',
   })
@@ -205,22 +203,19 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
             </Grid>
 
             <FormControl>
-              <FormLabel>타겟 오디언스 (선택사항)</FormLabel>
-              <Input
-                placeholder="예: 창업가, 학생, 직장인, IT 전문가..."
-                value={formData.targetAudience}
-                onChange={(e) => handleInputChange('targetAudience', e.target.value)}
-              />
-            </FormControl>
-
-            <FormControl>
               <FormLabel>추가 요청사항 (선택사항)</FormLabel>
               <Textarea
-                placeholder="특별한 요구사항, 스타일 선호도, 추가 내용등을 입력하세요..."
+                placeholder="타겟 오디언스, 특별한 요구사항, 스타일 선호도 등을 자유롭게 입력하세요...
+예: 타겟 오디언스: 20-30대 직장인, 톤: 친근하고 공감대 형성, 길이: 3분 읽기 분량"
                 value={formData.additionalNotes}
                 onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
-                rows={3}
+                rows={6}
+                resize="vertical"
+                minH="150px"
               />
+              <FormHelperText color="gray.500">
+                💡 콘텐츠 타입별 전용 변수들이 자동으로 표시됩니다. 예시를 참고해서 실제 내용으로 수정해주세요.
+              </FormHelperText>
             </FormControl>
 
             <FormControl>

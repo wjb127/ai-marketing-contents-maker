@@ -81,7 +81,6 @@ export default function CreateContentPage() {
         type: data.contentType,
         tone: data.tone,
         topic: data.topic,
-        target_audience: data.targetAudience,
         additional_instructions: data.additionalNotes,
         creativityLevel: data.creativityLevel,
         temperature: data.temperature,
@@ -96,7 +95,6 @@ export default function CreateContentPage() {
         wordCount: result.content.split(/\s+/).length,
         estimatedReadTime: Math.ceil(result.content.split(/\s+/).length / 200),
         metadata: {
-          targetAudience: result.target_audience,
           includeHashtags: true,
           length: 'medium'
         },
@@ -138,9 +136,6 @@ export default function CreateContentPage() {
         content_type: generatedContent.contentType as ContentType,
         tone: generatedContent.tone as ContentTone,
         topic: generatedContent.topic,
-        target_audience: generatedContent.metadata?.targetAudience,
-        word_count: generatedContent.wordCount,
-        estimated_read_time: generatedContent.estimatedReadTime,
         status: 'draft'
       })
       
