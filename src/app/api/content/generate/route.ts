@@ -82,17 +82,7 @@ export async function POST(request: NextRequest) {
         tone,
         topic,
         content: generatedContent,
-        target_audience,
-        additional_instructions,
-        status: 'draft',
-        auto_generated: false,
-        tags: [],
-        word_count: generatedContent.split(/\s+/).length,
-        estimated_read_time: Math.ceil(generatedContent.split(/\s+/).length / 200),
-        metadata: {
-          target_audience,
-          additional_instructions
-        }
+        status: 'draft'
       })
       .select()
       .single()

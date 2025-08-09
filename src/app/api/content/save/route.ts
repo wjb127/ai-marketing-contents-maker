@@ -43,15 +43,7 @@ export async function POST(request: NextRequest) {
         content_type,
         tone,
         topic,
-        status,
-        tags,
-        word_count: word_count || content.split(/\s+/).length,
-        estimated_read_time: estimated_read_time || Math.ceil(content.split(/\s+/).length / 200),
-        auto_generated: false,
-        metadata: {
-          target_audience,
-          additional_instructions
-        }
+        status
       })
       .select()
       .single()
