@@ -43,12 +43,83 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
 
   // 시간 처리 - 저장 시점에서 이미 보정됨
   const nowKST = currentTime // 현재 시간은 그대로 사용
-  const nextRunKST = new Date(nextRunAt) // DB에서 온 시간은 이미 보정되어 저장됨
+  let nextRunKST = new Date(nextRunAt) // DB에서 온 시간은 이미 보정되어 저장됨
+  
+  // 스케줄 시간이 지났으면 다음 실행 시간 계산
+  if (nextRunKST.getTime() <= nowKST.getTime() && isActive) {
+    // calculateNextRun 함수를 사용하여 다음 실행 시간 계산
+    const [hours, minutes] = timeOfDay.split(':').map(Number)
+    const now = new Date()
+    
+    switch (frequency) {
+      case 'daily':
+        const tomorrow = new Date(now)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        tomorrow.setHours(hours, minutes, 0, 0)
+        // -9시간 보정 적용 (저장 시와 동일한 보정)
+        nextRunKST = new Date(tomorrow.getTime() - 9 * 60 * 60 * 1000)
+        break
+        
+      case 'weekly':
+        const nextWeek = new Date(now)
+        const daysUntilMonday = (8 - nextWeek.getDay()) % 7 || 7
+        nextWeek.setDate(nextWeek.getDate() + daysUntilMonday)
+        nextWeek.setHours(hours, minutes, 0, 0)
+        // -9시간 보정 적용
+        nextRunKST = new Date(nextWeek.getTime() - 9 * 60 * 60 * 1000)
+        break
+        
+      case 'monthly':
+        const nextMonth = new Date(now)
+        nextMonth.setMonth(nextMonth.getMonth() + 1, 1)
+        nextMonth.setHours(hours, minutes, 0, 0)
+        // -9시간 보정 적용
+        nextRunKST = new Date(nextMonth.getTime() - 9 * 60 * 60 * 1000)
+        break
+        
+      case 'hourly':
+        const nextHour = new Date(now)
+        nextHour.setMinutes(minutes, 0, 0)
+        if (nextHour <= now) {
+          nextHour.setHours(nextHour.getHours() + 1)
+        }
+        // -9시간 보정 적용
+        nextRunKST = new Date(nextHour.getTime() - 9 * 60 * 60 * 1000)
+        break
+        
+      case '3hours':
+        const next3Hours = new Date(now)
+        next3Hours.setMinutes(minutes, 0, 0)
+        const currentHour3 = next3Hours.getHours()
+        const next3HourSlot = Math.ceil(currentHour3 / 3) * 3
+        next3Hours.setHours(next3HourSlot)
+        if (next3Hours <= now) {
+          next3Hours.setHours(next3Hours.getHours() + 3)
+        }
+        // -9시간 보정 적용
+        nextRunKST = new Date(next3Hours.getTime() - 9 * 60 * 60 * 1000)
+        break
+        
+      case '6hours':
+        const next6Hours = new Date(now)
+        next6Hours.setMinutes(minutes, 0, 0)
+        const currentHour6 = next6Hours.getHours()
+        const next6HourSlot = Math.ceil(currentHour6 / 6) * 6
+        next6Hours.setHours(next6HourSlot)
+        if (next6Hours <= now) {
+          next6Hours.setHours(next6Hours.getHours() + 6)
+        }
+        // -9시간 보정 적용
+        nextRunKST = new Date(next6Hours.getTime() - 9 * 60 * 60 * 1000)
+        break
+    }
+  }
+  
   const nextRunKSTLocal = nextRunKST // 추가 변환 없이 그대로 사용
 
   // 시간 차이 계산 (밀리초)
   const timeDiff = nextRunKSTLocal.getTime() - nowKST.getTime()
-  const isPast = timeDiff <= 0
+  const isPast = timeDiff <= 0 && !isActive // 비활성 상태일 때만 과거로 판단
 
   // 시간 단위로 변환
   const days = Math.floor(Math.abs(timeDiff) / (1000 * 60 * 60 * 24))
@@ -95,7 +166,7 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
 
   const getTimeUntilText = () => {
     if (!isActive) return ''
-    if (isPast) return '다음 실행 시간이 지났습니다'
+    // 활성 스케줄은 항상 다음 실행 시간까지의 카운트다운 표시
     
     let text = ''
     if (days > 0) text += `${days}일 `
