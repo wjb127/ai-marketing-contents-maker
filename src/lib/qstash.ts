@@ -33,14 +33,17 @@ export async function createRecurringSchedule(
       cron = `${minutes} */6 * * *` // 6시간마다 X분
       break
     case 'daily':
-      // 한국 시간 그대로 사용 (QStash는 timezone을 지원)
-      cron = `${minutes} ${hours} * * *` // 매일 특정 시간
+      // 한국 시간(KST)을 UTC로 변환: KST는 UTC+9이므로 9시간 빼야 함
+      const utcHours = (hours - 9 + 24) % 24
+      cron = `${minutes} ${utcHours} * * *` // 매일 특정 시간 (UTC)
       break
     case 'weekly':
-      cron = `${minutes} ${hours} * * 1` // 매주 월요일
+      const utcHoursWeekly = (hours - 9 + 24) % 24
+      cron = `${minutes} ${utcHoursWeekly} * * 1` // 매주 월요일 (UTC)
       break
     case 'monthly':
-      cron = `${minutes} ${hours} 1 * *` // 매월 1일
+      const utcHoursMonthly = (hours - 9 + 24) % 24
+      cron = `${minutes} ${utcHoursMonthly} 1 * *` // 매월 1일 (UTC)
       break
     default:
       throw new Error(`Unsupported frequency: ${frequency}`)
@@ -51,11 +54,14 @@ export async function createRecurringSchedule(
     cron,
     url,
     timeOfDay: `${timeOfDay} KST`,
-    frequency
+    timeOfDayUTC: `${String(Math.floor((hours - 9 + 24) % 24)).padStart(2, '0')}:${String(minutes).padStart(2, '0')} UTC`,
+    frequency,
+    kstHours: hours,
+    utcHours: (hours - 9 + 24) % 24
   })
 
   try {
-    // QStash Schedules API 사용
+    // QStash Schedules API 사용 (timezone을 cron 표현식으로 직접 처리)
     const response = await qstash.schedules.create({
       destination: url,
       cron,
@@ -66,10 +72,7 @@ export async function createRecurringSchedule(
       headers: {
         'Content-Type': 'application/json'
       },
-      retries: 3,
-      settings: {
-        timezone: timezone // Asia/Seoul 시간대 설정
-      }
+      retries: 3
     })
 
     console.log('✅ QStash schedule created:', response)
