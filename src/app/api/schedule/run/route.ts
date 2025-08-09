@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
-import { getDatabasePromptTemplate, logPromptUsage } from '@/utils/db-prompt-templates'
-import { calculateNextRun, scheduleContentGeneration } from '@/lib/qstash'
 import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 // 스케줄 즉시 실행 (테스트용)
@@ -49,54 +47,62 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // AI로 콘텐츠 생성
-    let prompt
-    const startTime = Date.now()
+    // AI로 콘텐츠 생성 (콘텐츠 생성 API와 동일한 방식)
+    const topic = schedule.topics?.[Math.floor(Math.random() * (schedule.topics?.length || 1))] || schedule.topic || ''
     
-    // 설정에서 프롬프트 타입 확인
-    const promptSettings = schedule.settings || {}
-    
-    if (promptSettings.promptType === 'custom' && promptSettings.customPrompt) {
-      // 커스텀 프롬프트 사용
-      prompt = promptSettings.customPrompt
-      console.log('🎯 Using custom prompt from schedule settings')
-    } else {
-      // 데이터베이스 프롬프트 사용
-      const topic = schedule.topics?.[Math.floor(Math.random() * (schedule.topics?.length || 1))] || schedule.topic || ''
-      prompt = await getDatabasePromptTemplate(
-        schedule.content_type,
-        schedule.tone || schedule.content_tone,
-        topic,
-        schedule.target_audience,
-        schedule.additional_instructions
-      )
-      console.log('🗄️ Using database prompt template for scheduled generation')
+    // Bundle all parameters into a single prompt string (same as content generation API)
+    const requestData = {
+      content_type: schedule.content_type,
+      type: schedule.content_type,
+      tone: schedule.tone || schedule.content_tone || 'professional',
+      topic: topic,
+      target_audience: schedule.target_audience,
+      additional_instructions: schedule.additional_instructions
     }
     
-    const promptFetchTime = Date.now() - startTime
+    const prompt = Object.entries(requestData)
+      .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n')
+
+    // Smart prompt enhancement if additional_instructions is empty or missing
+    let enhancedPrompt = prompt
+    const hasAdditionalInstructions = schedule.additional_instructions && schedule.additional_instructions.trim()
+    
+    if (!hasAdditionalInstructions) {
+      // AI will automatically add smart defaults based on content type and topic
+      enhancedPrompt += '\n\nadditional_instructions: Use your expertise to create engaging, well-structured content that resonates with the target audience. Apply best practices for the chosen content type and tone.'
+    }
 
     // 창의성 설정 가져오기
     const creativitySettings = schedule.creativity_level 
       ? CREATIVITY_LEVELS[schedule.creativity_level as keyof typeof CREATIVITY_LEVELS]
       : CREATIVITY_LEVELS.balanced
 
-    console.log('🤖 Generating scheduled content with database prompt')
-    const generateStartTime = Date.now()
+    console.log('🤖 Generating scheduled content with unified prompt approach')
     
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
-      temperature: creativitySettings.temperature,
-      top_p: creativitySettings.top_p,
+      temperature: creativitySettings.temperature || 0.7,
+      top_p: creativitySettings.top_p || 1.0,
       messages: [
         {
           role: 'user',
-          content: prompt
+          content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
+- Write in Korean (한국어)
+- Write naturally like a human, avoid AI-like formatting
+- NO markdown syntax (no #, ##, **, -, •, etc.)
+- Use plain text with natural paragraph breaks
+- Write in a conversational, engaging tone
+- Make it sound genuine and personal, not robotic
+- Follow Korean social media best practices
+- Include relevant context and examples when appropriate
+- Ensure the content matches the specified tone and content type perfectly`
         }
       ]
     })
 
-    const generateTime = Date.now() - generateStartTime
     const generatedContent = message.content[0]?.type === 'text' 
       ? message.content[0].text 
       : ''

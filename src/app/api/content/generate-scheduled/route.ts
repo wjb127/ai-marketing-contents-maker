@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { anthropic } from '@/lib/claude'
 import { scheduleContentGeneration, calculateNextRun } from '@/lib/qstash'
-import { getDatabasePromptTemplate } from '@/utils/db-prompt-templates'
 import { CREATIVITY_LEVELS } from '@/utils/constants'
 
 // 완전히 새로운 v2 API - 안전한 구조로 재작성
@@ -81,31 +80,53 @@ async function handler(request: NextRequest) {
       const promptSettings = schedule.settings || {}
       let prompt = ''
       
-      if (promptSettings.promptType === 'custom' && promptSettings.customPrompt) {
-        prompt = promptSettings.customPrompt
-      } else {
-        // DB에서 프롬프트 템플릿 가져오기 (콘텐츠 생성과 동일)
-        prompt = await getDatabasePromptTemplate(
-          schedule.content_type,
-          schedule.content_tone || 'casual',
-          schedule.topics?.[0] || schedule.topic || '일반 주제',
-          schedule.target_audience || '',
-          schedule.additional_instructions || ''
-        )
+      // Use same approach as content generation API - bundle parameters
+      const topic = schedule.topics?.[Math.floor(Math.random() * (schedule.topics?.length || 1))] || schedule.topic || ''
+      
+      const requestData = {
+        content_type: schedule.content_type,
+        type: schedule.content_type,
+        tone: schedule.content_tone || 'professional',
+        topic: topic,
+        target_audience: schedule.target_audience,
+        additional_instructions: schedule.additional_instructions
+      }
+      
+      const bundledPrompt = Object.entries(requestData)
+        .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n')
+
+      // Smart prompt enhancement if additional_instructions is empty or missing
+      let enhancedPrompt = bundledPrompt
+      const hasAdditionalInstructions = schedule.additional_instructions && schedule.additional_instructions.trim()
+      
+      if (!hasAdditionalInstructions) {
+        // AI will automatically add smart defaults based on content type and topic
+        enhancedPrompt += '\n\nadditional_instructions: Use your expertise to create engaging, well-structured content that resonates with the target audience. Apply best practices for the chosen content type and tone.'
       }
       
       const creativitySettings = schedule.creativity_level 
         ? CREATIVITY_LEVELS[schedule.creativity_level as keyof typeof CREATIVITY_LEVELS]
         : CREATIVITY_LEVELS.balanced
       
-      console.log('🤖 Generating content with AI...')
+      console.log('🤖 Generating content with unified approach...')
       
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
-        temperature: creativitySettings.temperature,
-        top_p: creativitySettings.top_p,
-        messages: [{ role: 'user', content: prompt }]
+        temperature: creativitySettings.temperature || 0.7,
+        top_p: creativitySettings.top_p || 1.0,
+        messages: [{ role: 'user', content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
+- Write in Korean (한국어)
+- Write naturally like a human, avoid AI-like formatting
+- NO markdown syntax (no #, ##, **, -, •, etc.)
+- Use plain text with natural paragraph breaks
+- Write in a conversational, engaging tone
+- Make it sound genuine and personal, not robotic
+- Follow Korean social media best practices
+- Include relevant context and examples when appropriate
+- Ensure the content matches the specified tone and content type perfectly` }]
       })
       
       generatedContent = message.content[0]?.type === 'text' 
