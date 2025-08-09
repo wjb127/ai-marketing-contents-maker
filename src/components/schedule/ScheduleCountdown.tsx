@@ -41,10 +41,10 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
     return null // SSR 방지
   }
 
-  // 한국 시간으로 변환 (+1초 보정)
-  const nowKST = new Date(currentTime.getTime() + 1000)
-  const nextRunKST = new Date(nextRunAt)
-  const nextRunKSTLocal = new Date(nextRunKST.getTime() + 1000)
+  // 시간 처리 - nextRunAt은 이미 올바른 시간대로 저장됨
+  const nowKST = currentTime // 현재 시간은 그대로 사용
+  const nextRunKST = new Date(nextRunAt) // DB에서 온 시간은 올바르게 파싱됨
+  const nextRunKSTLocal = nextRunKST // 추가 변환 없이 그대로 사용
 
   // 시간 차이 계산 (밀리초)
   const timeDiff = nextRunKSTLocal.getTime() - nowKST.getTime()
@@ -70,10 +70,9 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
 
   const status = getStatus()
 
-  // 시간 포맷팅
+  // 시간 포맷팅 - 로컬 시간대 사용
   const formatCurrentTime = (date: Date) => {
     return date.toLocaleString('ko-KR', {
-      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -86,7 +85,6 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
 
   const formatNextRun = (date: Date) => {
     return date.toLocaleString('ko-KR', {
-      timeZone: 'Asia/Seoul',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
@@ -113,13 +111,13 @@ export const ScheduleCountdown: React.FC<ScheduleCountdownProps> = ({
       {/* 현재 시간 */}
       <HStack spacing={2} mb={2} fontSize="xs" color="gray.500">
         <Icon as={TimeIcon} />
-        <Text>현재: {formatCurrentTime(nowKST)} KST</Text>
+        <Text>현재: {formatCurrentTime(nowKST)}</Text>
       </HStack>
 
       {/* 다음 실행 시간 */}
       <HStack spacing={2} mb={2} fontSize="sm">
         <Text color="gray.600">
-          <strong>다음 실행:</strong> {formatNextRun(nextRunKSTLocal)} KST
+          <strong>다음 실행:</strong> {formatNextRun(nextRunKSTLocal)}
         </Text>
         <Tooltip label={`빈도: ${frequency}, 시간: ${timeOfDay}`}>
           <Badge 
