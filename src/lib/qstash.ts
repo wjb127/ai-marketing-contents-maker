@@ -143,8 +143,52 @@ export async function resumeSchedule(qstashScheduleId: string) {
   }
 }
 
-// 콘텐츠 생성 스케줄링 (일회성 + 반복)
+// 콘텐츠 생성 스케줄링 (반복 스케줄 지원)
 export async function scheduleContentGeneration(
+  scheduleId: string,
+  frequency: 'daily' | 'weekly' | 'monthly' | 'hourly' | '3hours' | '6hours',
+  timeOfDay: string,
+  existingMessageId?: string | null
+) {
+  if (!qstash) {
+    throw new Error('QStash is not configured')
+  }
+
+  try {
+    // 기존 스케줄이 있으면 삭제
+    if (existingMessageId) {
+      try {
+        await qstash.schedules.delete(existingMessageId)
+        console.log('🗑️ Deleted existing schedule:', existingMessageId)
+      } catch (error) {
+        console.log('⚠️ Failed to delete existing schedule, continuing...')
+      }
+    }
+
+    // 반복 스케줄 생성
+    const scheduleId_qstash = await createRecurringSchedule(
+      scheduleId,
+      frequency, 
+      timeOfDay,
+      'Asia/Seoul'
+    )
+
+    console.log('✅ Recurring schedule created:', {
+      scheduleId,
+      qstashScheduleId: scheduleId_qstash,
+      frequency,
+      timeOfDay
+    })
+
+    return scheduleId_qstash
+  } catch (error: any) {
+    console.error('❌ Failed to schedule content generation:', error)
+    throw error
+  }
+}
+
+// 일회성 스케줄링 (기존 기능 유지)
+export async function scheduleOneTimeGeneration(
   scheduleId: string,
   nextRun: Date,
   existingMessageId?: string | null
@@ -177,7 +221,7 @@ export async function scheduleContentGeneration(
       retries: 3
     })
 
-    console.log('✅ Content generation scheduled:', {
+    console.log('✅ One-time generation scheduled:', {
       scheduleId,
       nextRun: nextRun.toISOString(),
       messageId: response.messageId
@@ -185,7 +229,7 @@ export async function scheduleContentGeneration(
 
     return response.messageId
   } catch (error: any) {
-    console.error('❌ Failed to schedule content generation:', error)
+    console.error('❌ Failed to schedule one-time generation:', error)
     throw error
   }
 }

@@ -382,16 +382,16 @@ const NAV_ITEMS: Array<NavItem> = [
     label: '홈',
     href: '/',
   },
-  {
-    label: '스케줄',
-    children: [
-      {
-        label: '자동 스케줄',
-        subLabel: '콘텐츠 자동 생성 스케줄을 설정하세요',
-        href: '/schedule',
-      },
-    ],
-  },
+  // {
+  //   label: '스케줄',
+  //   children: [
+  //     {
+  //       label: '자동 스케줄',
+  //       subLabel: '콘텐츠 자동 생성 스케줄을 설정하세요',
+  //       href: '/schedule',
+  //     },
+  //   ],
+  // },
   {
     label: '콘텐츠',
     children: [

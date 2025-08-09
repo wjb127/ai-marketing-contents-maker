@@ -82,10 +82,14 @@ export async function PUT(request: NextRequest) {
             }
           }
 
-          // 새로운 QStash 메시지 생성
-          console.log('🔄 Creating new QStash schedule for:', id)
-          newQstashMessageId = await scheduleContentGeneration(id, nextRun)
-          console.log('✅ New QStash message created:', newQstashMessageId)
+          // 새로운 QStash 반복 스케줄 생성
+          console.log('🔄 Creating new recurring QStash schedule for:', id)
+          newQstashMessageId = await scheduleContentGeneration(
+            id, 
+            newFrequency, 
+            newTimeOfDay
+          )
+          console.log('✅ New recurring QStash schedule created:', newQstashMessageId)
         } catch (qstashError: any) {
           console.error('❌ Failed to update QStash schedule:', qstashError.message)
           // QStash 실패해도 데이터베이스 업데이트는 계속 진행

@@ -203,11 +203,9 @@ async function handler(request: NextRequest) {
         schedule.timezone || 'Asia/Seoul'
       )
       
-      const messageId = await scheduleContentGeneration(
-        scheduleId, 
-        nextRun,
-        schedule.qstash_message_id // 기존 메시지 ID 전달
-      )
+      // 다음 실행을 위한 반복 스케줄은 이미 설정되어 있으므로 
+      // 별도의 스케줄링 불필요 (QStash가 자동으로 반복 실행)
+      const messageId = schedule.qstash_message_id // 기존 스케줄 ID 유지
       
       await supabase
         .from('schedules')

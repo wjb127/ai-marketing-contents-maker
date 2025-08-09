@@ -102,36 +102,42 @@ export async function POST(request: NextRequest) {
     
     if (process.env.QSTASH_TOKEN && !isLocal) {
       try {
-        console.log('🔄 Starting QStash scheduling for schedule:', data.id)
-        console.log('🔄 NextRun time:', {
-          utc: nextRun.toISOString(),
-          timestamp: nextRun.getTime(),
-          unixSeconds: Math.floor(nextRun.getTime() / 1000)
+        console.log('🔄 Creating recurring QStash schedule for:', data.id)
+        console.log('🔄 Schedule parameters:', {
+          frequency,
+          time_of_day,
+          timezone
         })
         
-        const messageId = await scheduleContentGeneration(data.id, nextRun)
+        // 반복 스케줄 생성
+        const scheduleId_qstash = await scheduleContentGeneration(
+          data.id, 
+          frequency, 
+          time_of_day
+        )
         
-        console.log('✅ QStash message created successfully:', messageId)
+        console.log('✅ QStash recurring schedule created:', scheduleId_qstash)
         
-        // Update schedule with QStash message ID
+        // Update schedule with QStash schedule ID
         const { error: updateError } = await supabase
           .from('schedules')
-          .update({ qstash_message_id: messageId })
+          .update({ qstash_message_id: scheduleId_qstash })
           .eq('id', data.id)
           
         if (updateError) {
-          console.error('❌ Failed to update schedule with QStash message ID:', updateError)
-          throw new Error(`Failed to update QStash message ID: ${updateError.message}`)
+          console.error('❌ Failed to update schedule with QStash schedule ID:', updateError)
+          throw new Error(`Failed to update QStash schedule ID: ${updateError.message}`)
         }
           
         qstashScheduled = true
-        console.log('✅ Schedule created and queued with QStash:', messageId)
+        console.log('✅ Recurring schedule created and registered with QStash:', scheduleId_qstash)
       } catch (qstashError: any) {
-        console.error('❌ Failed to schedule with QStash:', {
+        console.error('❌ Failed to create recurring schedule with QStash:', {
           error: qstashError.message,
           stack: qstashError.stack,
           scheduleId: data.id,
-          nextRun: nextRun.toISOString()
+          frequency,
+          time_of_day
         })
         // 스케줄은 생성되었지만 QStash 예약 실패
         // 나중에 크론잡으로 복구 가능
