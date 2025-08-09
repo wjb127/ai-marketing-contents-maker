@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listSchedules, createRecurringSchedule, deleteSchedule } from '@/lib/qstash-v2'
+import { listSchedules, createRecurringSchedule, deleteSchedule } from '@/lib/qstash'
 
 // QStash 스케줄 목록 조회
 export async function GET() {
