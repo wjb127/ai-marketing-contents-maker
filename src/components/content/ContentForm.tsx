@@ -138,7 +138,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               />
             </FormControl>
 
-            {/* 핵심 경쟁력: 클리셰 선택 영역 */}
+            {/* 클리셰 선택 영역 */}
             <Box
               position="relative"
               p={6}
@@ -204,7 +204,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                       }
                     }}
                   >
-                    🏆 핵심 경쟁력
+                    🏆
                   </Badge>
                 </HStack>
                 
