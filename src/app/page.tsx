@@ -127,7 +127,7 @@ export default function HomePage() {
               maxW="5xl"
               mx="auto"
             >
-              {/* 핵심 경쟁력: 클리셰 기반 생성 */}
+              {/* 클리셰 기반 생성 */}
               <Card 
                 shadow="xl"
                 borderRadius="xl"
