@@ -69,6 +69,7 @@ export default function CreateContentPage() {
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null)
   const [isCopying, setIsCopying] = useState(false)
   const [isFormCollapsed, setIsFormCollapsed] = useState(false)
+  const [isImprovingWithFeedback, setIsImprovingWithFeedback] = useState(false)
   const isMobile = useBreakpointValue({ base: true, lg: false })
 
   const handleGenerateContent = async (data: ContentFormData) => {
@@ -235,6 +236,72 @@ export default function CreateContentPage() {
       })
     } finally {
       setIsCopying(false)
+    }
+  }
+
+  const handleImproveWithFeedback = async () => {
+    if (!generatedContent || !evaluation) {
+      toast({
+        title: '피드백 없음',
+        description: '개선할 콘텐츠나 평가 결과가 없습니다.',
+        status: 'warning',
+        duration: 3000,
+      })
+      return
+    }
+
+    setIsImprovingWithFeedback(true)
+    try {
+      const response = await fetch('/api/content/improve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content_id: generatedContent.savedContentId,
+          original_content: generatedContent.content,
+          evaluation_feedback: evaluation.feedback,
+          evaluation_criteria: evaluation.criteria,
+          content_type: generatedContent.contentType,
+          tone: generatedContent.tone,
+          topic: generatedContent.topic
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('콘텐츠 개선 요청에 실패했습니다')
+      }
+
+      const result = await response.json()
+      
+      // 개선된 콘텐츠로 업데이트
+      const improvedContent = {
+        ...generatedContent,
+        content: result.content,
+        wordCount: result.content.split(/\s+/).length,
+        estimatedReadTime: Math.ceil(result.content.split(/\s+/).length / 200),
+        savedContentId: result.id
+      }
+      
+      setGeneratedContent(improvedContent)
+      // 기존 평가 결과 초기화 (새로운 콘텐츠이므로)
+      setEvaluation(null)
+      
+      toast({
+        title: '콘텐츠 개선 완료!',
+        description: 'AI 평가 피드백을 반영하여 콘텐츠가 개선되었습니다.',
+        status: 'success',
+        duration: 4000,
+      })
+    } catch (error: any) {
+      toast({
+        title: '개선 실패',
+        description: error.message || '콘텐츠 개선 중 오류가 발생했습니다.',
+        status: 'error',
+        duration: 5000,
+      })
+    } finally {
+      setIsImprovingWithFeedback(false)
     }
   }
 
@@ -424,9 +491,14 @@ export default function CreateContentPage() {
                       {/* Evaluation Results Display */}
                       {evaluation && (
                         <Box p={4} bg="purple.50" borderRadius="md" border="1px solid" borderColor="purple.200">
-                          <Heading size="sm" mb={3} color="purple.700">
-                            🤖 AI 평가 결과
-                          </Heading>
+                          <HStack justify="space-between" align="center" mb={3}>
+                            <Heading size="sm" color="purple.700">
+                              🤖 AI 평가 결과
+                            </Heading>
+                            <Badge colorScheme="purple" variant="solid" size="sm">
+                              개선 가능
+                            </Badge>
+                          </HStack>
                           
                           <Flex align="center" mb={3}>
                             <Text fontSize="sm" fontWeight="semibold" color="purple.700" mr={2}>
@@ -443,16 +515,16 @@ export default function CreateContentPage() {
                           {evaluation.feedback && (
                             <Box mb={3}>
                               <Text fontSize="sm" fontWeight="semibold" color="purple.700" mb={1}>
-                                피드백:
+                                AI 피드백:
                               </Text>
-                              <Text fontSize="sm" color="gray.700" bg="white" p={2} borderRadius="md">
+                              <Text fontSize="sm" color="gray.700" bg="white" p={3} borderRadius="md" lineHeight="1.5">
                                 {evaluation.feedback}
                               </Text>
                             </Box>
                           )}
 
                           {evaluation.criteria && (
-                            <Box>
+                            <Box mb={3}>
                               <Text fontSize="sm" fontWeight="semibold" color="purple.700" mb={2}>
                                 세부 평가:
                               </Text>
@@ -483,6 +555,15 @@ export default function CreateContentPage() {
                               </VStack>
                             </Box>
                           )}
+
+                          <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+                            <HStack spacing={2}>
+                              <Text fontSize="xs" color="blue.600">💡</Text>
+                              <Text fontSize="xs" color="blue.700" lineHeight="1.4">
+                                <strong>"피드백 반영"</strong> 버튼을 클릭하면 위 피드백을 바탕으로 콘텐츠가 자동으로 개선됩니다.
+                              </Text>
+                            </HStack>
+                          </Box>
                         </Box>
                       )}
                     </VStack>
@@ -530,16 +611,20 @@ export default function CreateContentPage() {
                         콘텐츠 복사
                       </Button>
                       <Button
-                        variant="outline"
+                        variant={evaluation ? "solid" : "outline"}
+                        colorScheme={evaluation ? "green" : "gray"}
                         size="md"
                         flex={1}
-                        onClick={() => {
+                        onClick={evaluation ? handleImproveWithFeedback : () => {
                           setGeneratedContent(null)
                           setEvaluation(null)
                         }}
+                        isLoading={isImprovingWithFeedback}
+                        loadingText="AI가 개선 중..."
                         isDisabled={!generatedContent}
+                        leftIcon={evaluation ? <TrendingUp size={16} /> : undefined}
                       >
-                        새로 생성
+                        {evaluation ? '🚀 피드백 반영' : '새로 생성'}
                       </Button>
                     </HStack>
                   </VStack>
