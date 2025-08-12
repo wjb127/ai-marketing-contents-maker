@@ -153,10 +153,22 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
 
       const data = await response.json()
       
-      // 기존 내용과 AI 제안을 결합
+      // 클리셰별 기본 변수들과 AI 제안을 효과적으로 결합
+      const fields = getFieldsForContentType(formData.contentType)
+      let combinedSuggestions = ''
+      
+      if (fields.length > 0) {
+        combinedSuggestions += `📋 ${CONTENT_TYPE_LABELS[formData.contentType]} 전용 변수들:\n`
+        combinedSuggestions += fields.map(field => `${field.key} (${field.label}): ${field.placeholder}`).join('\n')
+        combinedSuggestions += '\n\n'
+      }
+      
+      combinedSuggestions += `🤖 AI 맞춤 제안 (주제: "${formData.topic}"):\n${data.suggestions}`
+      
+      // 기존 내용과 결합된 제안을 추가
       const newAdditionalNotes = formData.additionalNotes 
-        ? `${formData.additionalNotes}\n\n🤖 AI 제안:\n${data.suggestions}`
-        : `🤖 AI 제안:\n${data.suggestions}`
+        ? `${formData.additionalNotes}\n\n${combinedSuggestions}`
+        : combinedSuggestions
       
       setFormData(prev => ({ 
         ...prev, 
@@ -165,9 +177,9 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
 
       toast({
         title: '✨ AI 제안 완료',
-        description: '주제에 맞는 변수 설정을 추가했습니다',
+        description: '클리셰별 전용 변수와 주제 맞춤 제안을 모두 추가했습니다',
         status: 'success',
-        duration: 3000,
+        duration: 4000,
       })
     } catch (error) {
       console.error('AI suggestions error:', error)
@@ -410,7 +422,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                 minH="150px"
               />
               <FormHelperText color="gray.500">
-                💡 콘텐츠 클리셰별 전용 변수들이 자동으로 표시됩니다. 우측 상단의 🤖✨ 버튼을 클릭하면 AI가 주제에 맞는 최적화된 변수 설정을 제안해드립니다.
+                💡 콘텐츠 클리셰별 전용 변수들이 자동으로 표시됩니다. 우측 상단의 🤖✨ 버튼을 클릭하면 AI가 클리셰의 기본 변수들과 주제를 모두 고려하여 최적화된 변수 설정을 제안해드립니다.
               </FormHelperText>
             </FormControl>
 
