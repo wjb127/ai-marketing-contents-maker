@@ -59,7 +59,12 @@ export default function HomePage() {
                     }
                   }}
                 >
-                  클리셰에 맞는 SNS 콘텐츠
+                  <Box as="span" whiteSpace={{ base: "nowrap", sm: "normal" }}>
+                    클리셰에 맞는
+                  </Box>{" "}
+                  <Box as="span" whiteSpace="nowrap">
+                    SNS 콘텐츠
+                  </Box>
                 </Text>
                 <Box
                   position="absolute"
@@ -87,8 +92,15 @@ export default function HomePage() {
               px={{ base: 2, md: 0 }}
               lineHeight={{ base: "1.6", md: "1.5" }}
             >
-              트위터, 인스타그램, 블로그까지! 각 플랫폼에 최적화된 
-              클리셰 스타일 콘텐츠를 AI가 즉시 생성해드립니다.
+              <Box as="span" whiteSpace={{ base: "nowrap", sm: "normal" }}>
+                트위터, 인스타그램, 블로그까지!
+              </Box>{" "}
+              <Box as="span">
+                각 플랫폼에 최적화된 클리셰 스타일 콘텐츠를
+              </Box>{" "}
+              <Box as="span" whiteSpace="nowrap">
+                AI가 즉시 생성해드립니다.
+              </Box>
             </Text>
           </VStack>
 
@@ -187,6 +199,7 @@ export default function HomePage() {
                         fontSize={{ base: "xs", sm: "sm", md: "lg" }}
                         fontWeight="bold"
                         color="white"
+                        whiteSpace="nowrap"
                       >
                         클리셰 기반
                       </Text>
@@ -213,7 +226,9 @@ export default function HomePage() {
                       lineHeight="1.4"
                       fontWeight="medium"
                     >
-                      검증된 SNS 패턴으로<br />즉시 통하는 콘텐츠
+                      <Box as="span" whiteSpace="nowrap">검증된 SNS 패턴으로</Box>
+                      <br />
+                      <Box as="span" whiteSpace="nowrap">즉시 통하는 콘텐츠</Box>
                     </Text>
                   </VStack>
                 </CardBody>
