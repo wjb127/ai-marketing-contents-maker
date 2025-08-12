@@ -19,6 +19,8 @@ import {
   Badge,
   FormHelperText,
   Grid,
+  IconButton,
+  Spinner,
 } from '@chakra-ui/react'
 import { useState } from 'react'
 import { ContentType, ContentTone } from '@/types'
@@ -60,6 +62,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     creativityLevel: 'balanced',
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [isAiLoading, setIsAiLoading] = useState(false)
   const toast = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,6 +119,67 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
       contentType: newContentType,
       additionalNotes: templateText // 기존 내용을 템플릿으로 교체
     }))
+  }
+
+  // AI 도움 기능
+  const handleAiSuggestions = async () => {
+    if (!formData.topic.trim()) {
+      toast({
+        title: '주제 입력 필요',
+        description: '먼저 콘텐츠 주제를 입력해주세요',
+        status: 'warning',
+        duration: 3000,
+      })
+      return
+    }
+
+    setIsAiLoading(true)
+    
+    try {
+      const response = await fetch('/api/content/ai-suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: formData.topic,
+          contentType: formData.contentType,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('AI 제안 생성에 실패했습니다')
+      }
+
+      const data = await response.json()
+      
+      // 기존 내용과 AI 제안을 결합
+      const newAdditionalNotes = formData.additionalNotes 
+        ? `${formData.additionalNotes}\n\n🤖 AI 제안:\n${data.suggestions}`
+        : `🤖 AI 제안:\n${data.suggestions}`
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        additionalNotes: newAdditionalNotes
+      }))
+
+      toast({
+        title: '✨ AI 제안 완료',
+        description: '주제에 맞는 변수 설정을 추가했습니다',
+        status: 'success',
+        duration: 3000,
+      })
+    } catch (error) {
+      console.error('AI suggestions error:', error)
+      toast({
+        title: '오류',
+        description: 'AI 제안 생성에 실패했습니다',
+        status: 'error',
+        duration: 3000,
+      })
+    } finally {
+      setIsAiLoading(false)
+    }
   }
 
   const selectedContentSpec = CONTENT_TYPE_SPECS[formData.contentType]
@@ -307,7 +371,35 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
             </Grid>
 
             <FormControl>
-              <FormLabel>추가 요청사항 (선택사항)</FormLabel>
+              <HStack justify="space-between" align="center" mb={2}>
+                <FormLabel mb={0}>추가 요청사항 (선택사항)</FormLabel>
+                <IconButton
+                  aria-label="AI 도움받기"
+                  icon={
+                    isAiLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <Box fontSize="sm">🤖✨</Box>
+                    )
+                  }
+                  size="sm"
+                  colorScheme="purple"
+                  variant="solid"
+                  onClick={handleAiSuggestions}
+                  isLoading={isAiLoading}
+                  loadingText="AI 분석중"
+                  borderRadius="full"
+                  _hover={{
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 0 20px rgba(147, 51, 234, 0.4)',
+                  }}
+                  _active={{
+                    transform: 'scale(0.95)',
+                  }}
+                  transition="all 0.2s"
+                  title="AI가 주제에 맞는 변수 설정을 제안해드립니다"
+                />
+              </HStack>
               <Textarea
                 placeholder="타겟 오디언스, 특별한 요구사항, 스타일 선호도 등을 자유롭게 입력하세요...
 예: 타겟 오디언스: 20-30대 직장인, 톤: 친근하고 공감대 형성, 길이: 3분 읽기 분량"
@@ -318,7 +410,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                 minH="150px"
               />
               <FormHelperText color="gray.500">
-                💡 콘텐츠 클리셰별 전용 변수들이 자동으로 표시됩니다. 예시를 참고해서 실제 내용으로 수정해주세요.
+                💡 콘텐츠 클리셰별 전용 변수들이 자동으로 표시됩니다. 우측 상단의 🤖✨ 버튼을 클릭하면 AI가 주제에 맞는 최적화된 변수 설정을 제안해드립니다.
               </FormHelperText>
             </FormControl>
 
