@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { anthropic } from '@/lib/claude'
 import { ContentType } from '@/types'
+import { getFieldsForContentType, CONTENT_TYPE_SPECIFIC_FIELDS } from '@/utils/content-type-fields'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +16,21 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Generating AI variable suggestions for:', { topic, contentType })
 
+    // 클리셰별 전용 필드 정보 가져오기
+    const clicheFields = getFieldsForContentType(contentType)
+    
+    // 클리셰별 필드 정보를 AI 프롬프트에 포함하기 위한 텍스트 생성
+    let clicheFieldsContext = ''
+    if (clicheFields.length > 0) {
+      clicheFieldsContext = `
+
+이 콘텐츠 클리셰에는 다음과 같은 전용 변수들이 있습니다. 이 변수들을 참고하여 더 구체적이고 맞춤형 제안을 해주세요:
+
+${clicheFields.map(field => `• ${field.label} (${field.key}): ${field.placeholder}`).join('\n')}
+
+위 전용 변수들의 특성을 고려하여, 주제 "${topic}"에 맞는 구체적인 값들을 제안해주세요.`
+    }
+
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
@@ -22,7 +38,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `주제 "${topic}"와 콘텐츠 타입 "${contentType}"에 최적화된 추가 요청사항 변수들을 생성해주세요.
+          content: `주제 "${topic}"와 콘텐츠 타입 "${contentType}"에 최적화된 추가 요청사항 변수들을 생성해주세요.${clicheFieldsContext}
 
 다음 형식으로 실용적이고 구체적인 변수들을 제안해주세요:
 
