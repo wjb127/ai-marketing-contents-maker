@@ -45,15 +45,17 @@ export const TONES = {
   INSPIRATIONAL: 'inspirational',
   EDUCATIONAL: 'educational',
   MOTIVATIONAL: 'motivational',
+  INFORMAL: 'informal',
 } as const
 
 export const TONE_LABELS = {
-  [TONES.PROFESSIONAL]: 'Professional',
-  [TONES.CASUAL]: 'Casual',
-  [TONES.HUMOROUS]: 'Humorous',
-  [TONES.INSPIRATIONAL]: 'Inspirational',
-  [TONES.EDUCATIONAL]: 'Educational',
-  [TONES.MOTIVATIONAL]: 'Motivational',
+  [TONES.PROFESSIONAL]: '존댓말',
+  [TONES.CASUAL]: '캐주얼',
+  [TONES.HUMOROUS]: '유머러스',
+  [TONES.INSPIRATIONAL]: '영감적',
+  [TONES.EDUCATIONAL]: '교육적',
+  [TONES.MOTIVATIONAL]: '동기부여',
+  [TONES.INFORMAL]: '반말',
 } as const
 
 export const CONTENT_LENGTHS = {
@@ -170,7 +172,7 @@ export const CONTENT_TYPE_SPECS = {
     maxLength: 280,
     recommendedHashtags: 2,
     structure: 'single_post',
-    description: 'Single X (Twitter) post',
+    description: 'X - STICK 법칙 적용: Simple(간단), Triggering(감정자극), Interesting(흥미), Credible(신뢰), Kind(공유가치)',
   },
   [CONTENT_TYPES.BLOG_POST]: {
     maxLength: 2000,

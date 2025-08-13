@@ -35,6 +35,7 @@ export type ContentTone =
   | 'inspirational'
   | 'educational'
   | 'motivational'
+  | 'informal'
 
 export type ContentStatus = 'draft' | 'scheduled' | 'published' | 'archived'
 

@@ -35,6 +35,21 @@ export async function POST(request: NextRequest) {
       enhancedPrompt += '\n\nadditional_instructions: Use your expertise to create engaging, well-structured content that resonates with the target audience. Apply best practices for the chosen content type and tone.'
     }
     
+    // Handle informal tone (반말)
+    const toneInstructions = requestData.tone === 'informal' 
+      ? '- Use informal Korean language (반말체) throughout the content\n- Write in a friendly, casual tone as if talking to a close friend\n- Use casual endings like -야, -어, -지, etc.'
+      : '- Write in a conversational, engaging tone\n- Make it sound genuine and personal, not robotic'
+    
+    // Apply STICK principle for X Post
+    const stickInstructions = requestData.type === 'x_post' 
+      ? `\n\nApply the STICK principle for viral X posts:
+- S (Simple): 간단하고 명확한 메시지 - 한 번에 하나의 핵심 아이디어만
+- T (Triggering): 감정을 자극하는 내용 - 공감, 놀라움, 호기심 유발
+- I (Interesting): 흥미로운 스토리나 사실 - 독자가 계속 읽고 싶게 만들기
+- C (Credible): 신뢰할 수 있는 내용 - 구체적인 숫자나 사례 포함
+- K (Kind/Shareable): 공유하고 싶은 가치 있는 콘텐츠 - 유용하거나 재미있는 정보`
+      : ''
+    
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
@@ -42,14 +57,13 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}\n\nIMPORTANT: 
+          content: `Create high-quality Korean content based on these parameters:\n\n${enhancedPrompt}${stickInstructions}\n\nIMPORTANT: 
 - Write in Korean (한국어)
 - KEEP IT CONCISE: Maximum 500 characters including spaces (공백 포함 500자 이내)
 - Write naturally like a human, avoid AI-like formatting
 - NO markdown syntax (no #, ##, **, -, •, etc.)
 - Use plain text with natural paragraph breaks
-- Write in a conversational, engaging tone
-- Make it sound genuine and personal, not robotic
+${toneInstructions}
 - Follow Korean social media best practices
 - Include relevant context and examples when appropriate
 - Ensure the content matches the specified tone and content type perfectly
