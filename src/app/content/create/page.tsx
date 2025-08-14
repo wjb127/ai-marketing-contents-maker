@@ -40,7 +40,6 @@ interface GeneratedContent {
   estimatedReadTime: number
   metadata: {
     targetAudience?: string
-    includeHashtags?: boolean
     length?: string
   }
   savedContentId?: string
@@ -96,7 +95,6 @@ export default function CreateContentPage() {
         wordCount: result.content.split(/\s+/).length,
         estimatedReadTime: Math.ceil(result.content.split(/\s+/).length / 200),
         metadata: {
-          includeHashtags: true,
           length: 'medium'
         },
         savedContentId: result.id
@@ -480,9 +478,6 @@ export default function CreateContentPage() {
                         <Box fontSize="sm" color="gray.600">
                           {generatedContent.metadata.targetAudience && (
                             <Text>타겟 오디언스: {generatedContent.metadata.targetAudience}</Text>
-                          )}
-                          {generatedContent.metadata.includeHashtags && (
-                            <Text>해시태그: 포함됨</Text>
                           )}
                           <Text>길이: {generatedContent.metadata.length}</Text>
                         </Box>

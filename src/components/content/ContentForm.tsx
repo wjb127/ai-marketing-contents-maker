@@ -45,7 +45,6 @@ export interface ContentFormData {
   tone: ContentTone
   length: string
   additionalNotes: string
-  includeHashtags: boolean
   creativityLevel?: string
   temperature?: number
   top_p?: number
@@ -58,7 +57,6 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
     tone: 'professional',
     length: 'medium',
     additionalNotes: '',
-    includeHashtags: true,
     creativityLevel: 'balanced',
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -315,24 +313,14 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                   </Select>
                 </FormControl>
                 
-                <HStack spacing={3} justify="space-between" flexWrap="wrap">
-                  <VStack spacing={1} align="start">
-                    <Text fontSize="xs" color="whiteAlpha.700" fontWeight="semibold">
-                      최적화된 길이
-                    </Text>
-                    <Badge colorScheme="whiteAlpha" variant="solid" size="sm">
-                      최대 {selectedContentSpec.maxLength}자
-                    </Badge>
-                  </VStack>
-                  <VStack spacing={1} align="end">
-                    <Text fontSize="xs" color="whiteAlpha.700" fontWeight="semibold">
-                      추천 해시태그
-                    </Text>
-                    <Badge colorScheme="whiteAlpha" variant="solid" size="sm">
-                      {selectedContentSpec.recommendedHashtags}개
-                    </Badge>
-                  </VStack>
-                </HStack>
+                <Box>
+                  <Text fontSize="xs" color="whiteAlpha.700" fontWeight="semibold">
+                    최적화된 길이
+                  </Text>
+                  <Badge colorScheme="whiteAlpha" variant="solid" size="sm">
+                    최대 {selectedContentSpec.maxLength}자
+                  </Badge>
+                </Box>
                 
                 <Text fontSize="xs" color="whiteAlpha.800" fontStyle="italic">
                   💡 {selectedContentSpec.description}
@@ -340,7 +328,7 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
               </VStack>
             </Box>
 
-            <Grid templateColumns={{ base: '1fr', md: '1fr 1fr 1fr' }} gap={4} width="100%">
+            <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={4} width="100%">
               <FormControl>
                 <FormLabel>톤 앤 매너</FormLabel>
                 <Select
@@ -361,24 +349,10 @@ export default function ContentForm({ onSubmit }: ContentFormProps) {
                   value={formData.length}
                   onChange={(e) => handleInputChange('length', e.target.value)}
                 >
-                  <option value="short">짧게</option>
-                  <option value="medium">보통</option>
-                  <option value="long">길게</option>
+                  <option value="short">짧게 (100자 이내)</option>
+                  <option value="medium">보통 (300자 이내)</option>
+                  <option value="long">길게 (500자 이상)</option>
                 </Select>
-              </FormControl>
-
-              <FormControl>
-                <FormLabel>해시태그 포함</FormLabel>
-                <Select
-                  value={formData.includeHashtags ? 'yes' : 'no'}
-                  onChange={(e) => handleInputChange('includeHashtags', e.target.value === 'yes')}
-                >
-                  <option value="yes">예</option>
-                  <option value="no">아니오</option>
-                </Select>
-                <FormHelperText>
-                  추천: {selectedContentSpec.recommendedHashtags}개 해시태그
-                </FormHelperText>
               </FormControl>
             </Grid>
 
