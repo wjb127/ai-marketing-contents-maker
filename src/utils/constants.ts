@@ -292,3 +292,13 @@ export const CREATIVITY_LEVELS = {
     description: '예측 불가능하고 독특한 콘텐츠'
   }
 } as const
+
+export const getCharacterLimitForContentType = (contentType: string): number => {
+  const spec = CONTENT_TYPE_SPECS[contentType as keyof typeof CONTENT_TYPE_SPECS]
+  return spec?.maxLength || 500 // fallback to 500 for unknown types
+}
+
+export const getCharacterLimitPromptText = (contentType: string): string => {
+  const limit = getCharacterLimitForContentType(contentType)
+  return `Maximum ${limit} characters including spaces (공백 포함 ${limit}자 이내)`
+}
